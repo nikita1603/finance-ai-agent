@@ -1,0 +1,3 @@
+company,date,financial_year,quarter,query,expected_tools_called,expected_sources_used,is_multi_hop,expected_keywords
+Reliance,2025-10-01,2025-26,Q3,Compare Reliance's revenue with HDFC revenue for Q3 2025-26.,financial_statement_tool; rag_tool,Reliance_Q3_FY2026.pdf; HDFC_Q3_FY2026.pdf,true,Reliance; HDFC; revenue; comparison; 2025-26
+HDFC,2025-04-15,2025-26,Q1,Explain HDFC's Q1 2025-26 performance and key highlights.,rag_tool,HDFC_Q1_FY2026.pdf,false,performance; highlights; HDFC; Q1; 2025-26

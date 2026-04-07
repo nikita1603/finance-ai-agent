@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finance-ai-agent"
+version = "0.1.0"
+description = "An AI-powered agent for financial analysis and insights using RAG"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+
+dependencies = [
+    "llama_index",
+    "fastapi",
+    "pydantic",
+    "pandas",
+    "google",
+    "yfinance",
+    "requests",
+    "streamlit",
+    "uvicorn",
+    "llama-index-llms-google-genai",
+    "llama-index-embeddings-huggingface",
+    "python-dotenv"
+]
+
+[tool.setuptools]
+packages = ["backend", "frontend"]
