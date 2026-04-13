@@ -1,6 +1,31 @@
 company,date,financial_year,quarter,query,expected_tools_called,expected_sources_used,is_multi_hop,expected_keywords
-HDFC,2025-10-15,2025-26,Q3,What were HDFC's total assets in Q3 2025-26?,financial_statement_tool,,false,assets; HDFC; Q3; 2025-26
-Reliance,2025-10-01,2025-26,Q3,Compare Reliance's revenue with HDFC revenue for Q3 2025-26.,financial_statement_tool; rag_tool,Reliance_Q3_FY2026.pdf; HDFC_Q3_FY2026.pdf,true,Reliance; HDFC; revenue; comparison; 2025-26
-HDFC,2026-01-10,2025-26,Q4,What is HDFC's P/E ratio and market fundamentals in Q3 2025-26?,fundamental_tool,,false,HDFC; ratio; fundamental; Q4; 2025-26
-Reliance,2025-10-20,2025-26,Q3,What was the stock price movement reason for Reliance in Q3 2025-26?,get_gnews_articles,,false,Reliance; stock; price; news; Q3; 2025-26
-HDFC,2025-04-15,2025-26,Q1,Explain HDFC's Q1 2025-26 performance and key highlights.,rag_tool,HDFC_Q1_FY2026.pdf,false,performance; highlights; HDFC; Q1; 2025-26
+hdfc,2026-02-20,2024-25,None,What was HDFC Bank's total revenue in the latest annual financial statement?,financial_statement_tool,,false,HDFC; revenue; annual; total
+reliance,2026-02-20,2024-25,None,What was Reliance's net income in the latest annual report?,financial_statement_tool,,false,Reliance; net income; annual
+hdfc,2026-02-20,2024-25,None,What are HDFC Bank's total assets as per latest balance sheet?,financial_statement_tool,,false,HDFC; total assets; balance sheet; annual
+reliance,2026-02-20,2024-25,None,What was Reliance's operating cash flow last year?,financial_statement_tool,,false,Reliance; operating cash flow; annual
+reliance,2026-02-20,2024-25,None,What was Reliance's capital expenditure last year?,financial_statement_tool,,false,Reliance; capital expenditure; capex; annual
+hdfc,2026-02-20,2025-26,Q4,What is HDFC Bank's current market capitalization?,fundamental_tool,,false,HDFC; market cap; capitalization
+reliance,2026-02-20,2025-26,Q4,What is Reliance's trailing PE ratio?,fundamental_tool,,false,Reliance; PE ratio; trailing; P/E
+hdfc,2026-02-20,2025-26,Q4,What is HDFC Bank's return on equity?,fundamental_tool,,false,HDFC; return on equity; ROE
+hdfc,2026-01-15,2025-26,Q4,How did HDFC stock perform on 2026-01-15?,historical_price_tool,,false,HDFC; stock; price; 2026-01-15
+reliance,2026-01-15,2025-26,Q4,What was intraday volatility of Reliance on 2026-01-15?,historical_price_tool,,false,Reliance; intraday; volatility; 2026-01-15
+reliance,2026-01-30,2025-26,Q4,Was Reliance stock in an uptrend during January 2026?,historical_price_tool,,false,Reliance; uptrend; January 2026; stock
+reliance,2026-01-15,2025-26,Q4,Why did Reliance stock fall on 2026-01-15?,historical_price_tool; get_gnews_articles,,true,Reliance; stock; fall; decline; 2026-01-15; news
+hdfc,2026-02-20,2025-26,Q4,Why did HDFC stock rise last week?,historical_price_tool; get_gnews_articles,,true,HDFC; stock; rise; news
+reliance,2026-02-20,2025-26,Q4,What is the current market sentiment around Reliance?,get_gnews_articles,,false,Reliance; sentiment; market; news
+hdfc,2026-02-20,2025-26,Q4,Summarize latest news about HDFC Bank.,get_gnews_articles,,false,HDFC; news; latest
+hdfc,2026-02-20,2025-26,Q1,Explain HDFC Bank's Q1 FY26 performance.,rag_tool,press-release-june-2025.pdf; q1fy26-earnings-presentation.pdf,false,HDFC; Q1; FY26; performance; highlights
+hdfc,2026-02-20,2025-26,Q3,What was HDFC Bank's PAT in Q3 FY26?,rag_tool,financial-results-for-the-quarter-and-nine-months-ended-December-31-2025.pdf; Q3FY26-earnings-presentation.pdf,false,HDFC; PAT; profit; Q3; FY26
+hdfc,2026-02-20,2025-26,Q2,What was HDFC CASA ratio in Q2 FY26?,rag_tool,q2fy26-earnings-presentation.pdf,false,HDFC; CASA; ratio; Q2; FY26
+hdfc,2026-02-20,2025-26,Q3,How did provisions impact HDFC Q3 FY26?,rag_tool,press-release-december-2025.pdf; Q3FY26-earnings-presentation.pdf,false,HDFC; provisions; Q3; FY26; impact
+hdfc,2026-02-20,2025-26,Q2,Compare HDFC Q1 and Q2 FY26 PAT.,rag_tool,q1fy26-earnings-presentation.pdf; q2fy26-earnings-presentation.pdf,false,HDFC; PAT; Q1; Q2; FY26; compare; profit
+reliance,2026-02-20,2025-26,Q1,Explain Reliance Q1 FY26 segment performance.,rag_tool,MediaRelease-RILQ1FY2025-26FinancialandOperationalPerformance.pdf; Media_Release_RIL_Q2_FY2025-26_Financial_and_Operational_Performance.pdf; Media_Release_RIL_Q3_FY2025-26_Financial_and_Operational_Performance.pdf,false,Reliance; Q1; FY26; segment; performance
+reliance,2026-02-20,2025-26,Q3,What was Reliance EBITDA in Q3 FY26?,rag_tool,Media_Release_RIL_Q3_FY2025-26_Financial_and_Operational_Performance.pdf,false,Reliance; EBITDA; Q3; FY26
+reliance,2026-02-20,2025-26,Q3,Compare Reliance EBITDA margin Q2 vs Q3 FY26.,rag_tool,Media_Release_RIL_Q3_FY2025-26_Financial_and_Operational_Performance.pdf; Media_Release_RIL_Q2_FY2025-26_Financial_and_Operational_Performance.pdf,false,Reliance; EBITDA; margin; Q2; Q3; FY26; compare
+reliance,2026-02-20,2025-26,Q1,How did Oil & Gas segment perform in Q1 FY26?,rag_tool,MediaRelease-RILQ1FY2025-26FinancialandOperationalPerformance.pdf; Media_Release_RIL_Q2_FY2025-26_Financial_and_Operational_Performance.pdf; Media_Release_RIL_Q3_FY2025-26_Financial_and_Operational_Performance.pdf,false,Reliance; Oil; Gas; segment; Q1; FY26; performance
+hdfc,2026-02-20,2025-26,Q3,What were key highlights from HDFC Q3 earnings call?,rag_tool,HDFCB_Q3FY26_Transcript_Final.pdf,false,HDFC; Q3; FY26; earnings call; highlights; transcript
+reliance,2026-02-20,2025-26,Q1,Did Reliance improve EBITDA YoY in Q1 FY26?,rag_tool,MediaRelease-RILQ1FY2025-26FinancialandOperationalPerformance.pdf; Media_Release_RIL_Q2_FY2025-26_Financial_and_Operational_Performance.pdf; Media_Release_RIL_Q3_FY2025-26_Financial_and_Operational_Performance.pdf,false,Reliance; EBITDA; YoY; Q1; FY26; improve
+hdfc,2026-02-20,2025-26,Q2,Did HDFC improve asset quality in Q2 FY26?,rag_tool,q2fy26-earnings-presentation.pdf,false,HDFC; asset quality; Q2; FY26; NPA; GNPA
+hdfc,2026-02-20,2025-26,Q3,Compare HDFC and Reliance profitability in latest quarter.,rag_tool,Q3FY26-earnings-presentation.pdf; Media_Release_RIL_Q3_FY2025-26_Financial_and_Operational_Performance.pdf,false,HDFC; Reliance; profitability; Q3; FY26; compare; PAT
+hdfc,2026-02-20,2025-26,Q4,Give overall investment view on HDFC combining price and fundamentals.,historical_price_tool; fundamental_tool,,true,HDFC; investment; price; fundamentals; PE; ROE; valuation
+reliance,2026-02-20,2025-26,Q3,Give overall investment view on Reliance combining earnings and price trend.,rag_tool; historical_price_tool,Media_Release_RIL_Q3_FY2025-26_Financial_and_Operational_Performance.pdf,true,Reliance; investment; earnings; price; trend; EBITDA

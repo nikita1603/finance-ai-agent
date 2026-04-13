@@ -165,6 +165,29 @@ cd evaluation && make hallucination
 
 Output includes a per-query hallucination flag, the specific hallucinated claims, and a summary rate.
 
+## Evaluation Results
+
+### End-to-end Agent Evaluation
+
+| Metric | Score |
+|---|---|
+| Total tests | 30 |
+| Tools accuracy | 67% |
+| Tools precision | 77% |
+| Tools recall | 75% |
+| Keywords recall | 46% |
+| Multi-hop accuracy | 90% |
+| Response rate | 100% |
+
+### RAG Hallucination Evaluation
+
+| Metric | Score |
+|---|---|
+| RAG test cases evaluated | 12 |
+| Successfully checked | 4 |
+| Hallucinations detected | 1 |
+| Hallucination rate | 25.0% |
+
 ### Test Case CSV Format
 
 `evaluation_sample.csv` columns:

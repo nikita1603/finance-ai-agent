@@ -44,13 +44,13 @@ def load_test_cases(csv_path: str) -> List[Dict]:
 
 
 def compute_result(expected: Dict, tools_called: List[str], response: Optional[str], sources_used: List[str]) -> Dict:
-    exp = set(expected["expected_tools"])
-    act = set(tools_called)
+    exp = set(t.lower() for t in expected["expected_tools"])
+    act = set(t.lower() for t in tools_called)
     found_kw = [k for k in expected["expected_keywords"] if k.lower() in (response or "").lower()]
     missing_kw = [k for k in expected["expected_keywords"] if k not in found_kw]
 
-    exp_src = set(expected["expected_sources"])
-    act_src = set(sources_used)
+    exp_src = set(s.lower() for s in expected["expected_sources"])
+    act_src = set(s.lower() for s in sources_used)
     rag_expected = bool(exp_src)
     sources_precision = len(act_src & exp_src) / len(act_src) if act_src else (1.0 if not exp_src else 0.0)
     sources_recall = len(act_src & exp_src) / len(exp_src) if exp_src else (1.0 if not act_src else 0.0)
