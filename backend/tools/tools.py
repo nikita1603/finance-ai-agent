@@ -1,3 +1,11 @@
+"""Tool registry for the agent.
+
+This module defines `TOOLS`, a list of `FunctionTool` wrappers that expose
+project-specific helper functions (RAG search, news, historical prices,
+fundamentals, and financial statements) to the `FunctionAgent`.
+
+"""
+
 from llama_index.core.tools import FunctionTool
 from backend.tools.company_financial_statement_tool.rag_model import rag_tool
 from backend.tools.company_financial_statement_tool.yfinance_tool import financial_statement_tool
@@ -5,8 +13,12 @@ from backend.tools.historical_price_tool.yfinance_tool import historical_price_t
 from backend.tools.company_fundamental_tool.yfinance_tools import fundamental_tool
 from backend.tools.news_tool.gnews_tool import get_gnews_articles
 
+# List of tools exposed to the agent. Each entry is a FunctionTool that
+# provides a name, a callable, and a description used by the agent's
+# tool-selection logic.
 TOOLS = [
 
+    # RAG tool: qualitative and document-grounded analysis
     FunctionTool.from_defaults(
         fn=rag_tool,
         name="rag_tool",
@@ -35,6 +47,7 @@ TOOLS = [
         )
     ),
 
+    # News tool: fetch GNews articles around a given date/company
     FunctionTool.from_defaults(
         fn=get_gnews_articles,
         name="get_gnews_articles",
@@ -55,6 +68,7 @@ TOOLS = [
         )
     ),
 
+    # Historical price tool: OHLCV for a specific date (with lookback)
     FunctionTool.from_defaults(
         fn=historical_price_tool,
         name="historical_price_tool",
@@ -78,6 +92,7 @@ TOOLS = [
         )
     ),
 
+    # Fundamental tool: current valuation and company fundamentals
     FunctionTool.from_defaults(
         fn=fundamental_tool,
         name="fundamental_tool",
@@ -103,6 +118,7 @@ TOOLS = [
         )
     ),
 
+    # Financial statement tool: exact income/balance/cashflow numbers
     FunctionTool.from_defaults(
         fn=financial_statement_tool,
         name="financial_statement_tool",

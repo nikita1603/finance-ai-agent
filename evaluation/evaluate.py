@@ -29,6 +29,13 @@ Question: {query}
 
 
 def load_test_cases(csv_path: str) -> List[Dict]:
+    """Load evaluation test cases from CSV and normalize fields.
+
+    The CSV is expected to contain columns used by the evaluation harness
+    such as `expected_tools_called`, `expected_keywords`, and
+    `expected_sources_used`. This function normalizes those semi-colon
+    separated fields into lists and returns a list of dict records.
+    """
     data = pd.read_csv(csv_path)
     data["expected_tools"] = data["expected_tools_called"].fillna("").apply(
         lambda x: [t.strip() for t in x.split(";") if t.strip()]
@@ -44,6 +51,13 @@ def load_test_cases(csv_path: str) -> List[Dict]:
 
 
 def compute_result(expected: Dict, tools_called: List[str], response: Optional[str], sources_used: List[str]) -> Dict:
+    """Compute per-question evaluation result dict.
+
+    Compares expected tools/keywords/sources against the actual tools
+    invoked and the produced response. Returns a dictionary that is
+    later aggregated by `compute_metrics`.
+    """
+
     exp = set(t.lower() for t in expected["expected_tools"])
     act = set(t.lower() for t in tools_called)
     found_kw = [k for k in expected["expected_keywords"] if k.lower() in (response or "").lower()]
@@ -80,6 +94,10 @@ def compute_result(expected: Dict, tools_called: List[str], response: Optional[s
 
 
 def compute_metrics(results: List[Dict]) -> Dict:
+    """Aggregate per-question results into overall metrics.
+
+    Returns a dictionary of summary statistics used for the final report.
+    """
     n = len(results)
     rag_results = [r for r in results if r["rag_expected"]]
     n_rag = len(rag_results)
@@ -98,6 +116,13 @@ def compute_metrics(results: List[Dict]) -> Dict:
 
 
 async def run_query(query: str) -> Tuple[List[str], Optional[str], List[str]]:
+    """Run a query through the agent and collect tool usage and sources.
+
+    Streams events from the agent handler to capture which tools were
+    invoked (ToolCallResult events) and extracts any RAG sources noted in
+    the rag_tool output. Returns (tools_called, response_text, sources_used).
+    """
+
     tools_called: List[str] = []
     sources_used: List[str] = []
     try:
@@ -113,6 +138,7 @@ async def run_query(query: str) -> Tuple[List[str], Optional[str], List[str]]:
                         sources_used.extend(
                             s.strip() for s in m.group(1).split(";") if s.strip()
                         )
+        # Await the handler to get final response text
         return tools_called, str(await handler), sources_used
     except Exception as e:
         logger.error(f"Query failed: {e}")

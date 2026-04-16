@@ -1,3 +1,9 @@
+"""Agent wiring for the finance RAG assistant.
+
+This module configures the LLM, callback handlers, and the
+`FunctionAgent` used by the HTTP API.
+"""
+
 import os
 from llama_index.core.agent import FunctionAgent
 from llama_index.llms.google_genai import GoogleGenAI  # Official integration
@@ -8,21 +14,30 @@ from dotenv import load_dotenv
 import logging
 from backend.tools.tools import TOOLS
 
+# Load environment variables from a .env file if present
 load_dotenv()
 
+# Configure a debug callback handler to capture detailed traces during
+# agent execution. These callbacks are helpful when diagnosing tool calls
+# and LLM interactions.
 llama_debug = LlamaDebugHandler(print_trace_on_end=True)
 callback_manager = CallbackManager([llama_debug])
+# Register the callback manager so the llama_index runtime emits events
+# to the provided handlers.
 Settings.callback_manager = callback_manager
 
+# Module logger
 logger = logging.getLogger(__name__)
 
 # ---------------- Gemini LLM ----------------
-# Use the official wrapper so the agent can handle tool-calling natively
+# Use the official Google GenAI wrapper so the agent can call functions/tools
+# natively via the model's tool-calling interface.
 llm = GoogleGenAI(
     model="models/gemini-2.5-flash",
     api_key=os.getenv("GEMINI_API_KEY")
 )
 
+# System prompt that guides the agent's high-level behavior and rules.
 system_prompt = (
     "You are a Professional Equity Research Analyst AI.\n\n" 
 
@@ -76,6 +91,9 @@ system_prompt = (
 
 
 # ---------------- FunctionAgent ----------------
+# Create the FunctionAgent with the available tools and configured LLM.
+# The agent will follow `system_prompt` and is allowed a limited number of
+# function calls per query (controlled by `max_function_calls`).
 agent = FunctionAgent(
     tools=TOOLS,
     llm=llm, 

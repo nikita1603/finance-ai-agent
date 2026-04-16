@@ -49,7 +49,22 @@ Respond ONLY with valid JSON in exactly this format (no markdown, no code fences
 
 
 def evaluate_hallucination(context: str, response: str, question: str) -> Dict:
-    """Ask Gemini to detect hallucinations in response vs retrieved context."""
+    """Ask Gemini to detect hallucinations in `response` vs `context`.
+
+    This function formats the `HALLUCINATION_PROMPT`, sends it to the
+    Gemini model via the `client` and expects a strict JSON reply. The
+    returned JSON is parsed and normalized into a small result dict.
+
+    Args:
+        context: The retrieved context (concatenated documents) used by RAG.
+        response: The RAG/agent final answer to be checked for hallucinations.
+        question: The original user question (for context in the prompt).
+
+    Returns:
+        A dict with keys: `has_hallucination` (bool|None),
+        `hallucinated_claims` (list), and `verdict` (str).
+    """
+
     prompt = HALLUCINATION_PROMPT.format(
         context=context,
         question=question,
@@ -58,6 +73,7 @@ def evaluate_hallucination(context: str, response: str, question: str) -> Dict:
     try:
         result = client.models.generate_content(model=gemini_model, contents=prompt)
         raw = result.text.strip()
+        # The model may wrap JSON in markdown fences; strip common wrappers.
         raw = re.sub(r'^```(?:json)?\s*', '', raw)
         raw = re.sub(r'\s*```$', '', raw)
         parsed = json.loads(raw)
@@ -76,13 +92,21 @@ def evaluate_hallucination(context: str, response: str, question: str) -> Dict:
 
 
 def run_hallucination_eval(csv_path: str) -> None:
+    """Run hallucination checks over CSV test cases.
+
+    For each test case that expects `rag_tool`, this function retrieves the
+    RAG context, generates an answer (using the pipeline under test), and
+    asks the LLM to detect unsupported claims. Results are aggregated and
+    printed to stdout for quick analysis.
+    """
+
     test_cases = load_test_cases(csv_path)
     rows = []
 
     for i, case in enumerate(test_cases, 1):
         logger.info(f"[{i}/{len(test_cases)}] {case['company']} — {case['query'][:60]}")
 
-        # Only evaluate cases that expect the rag_tool
+        # Only evaluate cases that expect the rag_tool — others are skipped.
         if "rag_tool" not in case.get("expected_tools", []):
             logger.info("  rag_tool not expected for this case — skipping")
             continue
@@ -94,6 +118,9 @@ def run_hallucination_eval(csv_path: str) -> None:
         quarter = parsed["quarter"]
         question = parsed["question"]
 
+        # Retrieve documents/nodes and a concatenated context string for the
+        # given company / fiscal year / quarter / question. Handle and record
+        # failures so the evaluation can continue over the remaining cases.
         try:
             nodes, context = _retrieve_context(company, fy, quarter, question)
         except Exception as e:
@@ -107,6 +134,8 @@ def run_hallucination_eval(csv_path: str) -> None:
             })
             continue
 
+        # If retrieval returned no documents, record and skip the hallucination
+        # check since there is no evidence to compare the final answer against.
         if not nodes:
             logger.warning("  No nodes retrieved — skipping hallucination check")
             rows.append({
@@ -118,6 +147,8 @@ def run_hallucination_eval(csv_path: str) -> None:
             })
             continue
 
+        # Generate an answer using the RAG answer generator. Record errors
+        # and continue so that a single failure doesn't stop the whole run.
         try:
             response = _generate_answer(context, question)
         except Exception as e:
@@ -131,6 +162,7 @@ def run_hallucination_eval(csv_path: str) -> None:
             })
             continue
 
+        # Ask the LLM to detect unsupported claims in the generated answer.
         logger.info("  Running hallucination check with Gemini...")
         result = evaluate_hallucination(context, response, question)
         flag = "HALLUCINATION DETECTED" if result["has_hallucination"] else "No hallucination"
