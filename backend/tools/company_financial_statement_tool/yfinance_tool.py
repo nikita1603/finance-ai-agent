@@ -88,6 +88,7 @@ def financial_statement_tool(user_query: str):
                 target_date = pd.Timestamp(year=target_year, month=month, day=day)
 
                 df = stock.quarterly_financials
+                
 
                 if df.empty:
                     return "Quarterly financial data unavailable."

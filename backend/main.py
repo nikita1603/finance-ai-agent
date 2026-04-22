@@ -8,6 +8,7 @@ from llama_index.core.agent.workflow import (
     AgentStream,
 )
 
+import asyncio
 import logging
 from backend.logger_config import setup_logger
 setup_logger()
@@ -48,26 +49,45 @@ async def ask(request: QueryRequest):
     logger.info(f"Received query : {request.query}") 
     query_counter += 1
 
-    try:
-        # Start the agent; the returned handler supports streaming events
-        handler = agent.run(request.query)
+    max_retries = 4
+    tool_outputs: dict[str, str] = {}
+    for attempt in range(max_retries):
+        try:
+            handler = agent.run(request.query)
 
-        # Stream intermediate events for monitoring / evaluation
-        async for event in handler.stream_events():
-            if isinstance(event, AgentStream):
-                # Partial text delta from the agent's generation
-                logger.info(event.delta)
-            elif isinstance(event, ToolCallResult):
-                # Log tool invocation and result for traceability
-                logger.info(f"EVALUATION_LOGS | TOOL_CALL | QUERY_NUM: {query_counter} | TOOL: {event.tool_name}")
-                logger.info(f"TOOL CALL DONE | TOOL: {event.tool_name} | ARGS: {event.tool_kwargs} | RESULT: {event.tool_output}")   
-        # Await the final response from the agent handler
-        response = await handler
-        logger.info(f"Agent responded successfully")
-        # Flatten newlines for concise single-line log entry
-        logger.info(f"EVALUATION_LOGS | QUERY_RESPONSE | QUERY_NUM: {query_counter} | RESPONSE: {str(response).replace('\n', ' ')}")
-        return {"answer": str(response)}
-    except Exception as e:
-        # Preserve original error handling while capturing traceback
-        logger.error(f"Error in ask endpoint: {e}")
-        return JSONResponse(status_code=500, content={"error": "An error occurred while processing the query."})
+            async for event in handler.stream_events():
+                if isinstance(event, AgentStream):
+                    logger.info(event.delta)
+                elif isinstance(event, ToolCallResult):
+                    logger.info(f"EVALUATION_LOGS | TOOL_CALL | QUERY_NUM: {query_counter} | TOOL: {event.tool_name}")
+                    logger.info(f"TOOL CALL DONE | TOOL: {event.tool_name} | ARGS: {event.tool_kwargs} | RESULT: {event.tool_output}")
+                    tool_outputs[event.tool_name] = str(event.tool_output)
+
+            response = await handler
+            logger.info(f"Agent responded successfully")
+            logger.info(f"EVALUATION_LOGS | QUERY_RESPONSE | QUERY_NUM: {query_counter} | RESPONSE: {str(response).replace('\n', ' ')}")
+            return {"answer": str(response)}
+
+        except Exception as e:
+            err_str = str(e)
+            is_last = attempt == max_retries - 1
+            is_retryable = "503" in err_str or "429" in err_str
+            if not is_retryable or is_last:
+                logger.error(f"Error in ask endpoint: {e}")
+                if tool_outputs:
+                    fallback = "\n\n---\n".join(
+                        f"[{name} output]\n{output}" for name, output in tool_outputs.items()
+                    )
+                    logger.info("Returning tool outputs as fallback due to agent LLM failure")
+                    return {"answer": f"Agent LLM unavailable ({e}). Showing raw tool output:\n\n{fallback}"}
+                return JSONResponse(status_code=500, content={"error": "An error occurred while processing the query."})
+            # For 429, parse the suggested retry delay from the error message; fall back to exponential backoff
+            delay = 2 ** attempt
+            if "429" in err_str:
+                import re
+                match = re.search(r"retry.*?(\d+(?:\.\d+)?)s", err_str, re.IGNORECASE)
+                if match:
+                    delay = float(match.group(1)) + 2  # small buffer
+            label = "429 rate-limit" if "429" in err_str else "503"
+            logger.warning(f"Agent {label} on attempt {attempt + 1}/{max_retries}, retrying in {delay}s: {e}")
+            await asyncio.sleep(delay)

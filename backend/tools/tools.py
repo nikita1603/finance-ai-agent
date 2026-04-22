@@ -8,7 +8,7 @@ fundamentals, and financial statements) to the `FunctionAgent`.
 
 from llama_index.core.tools import FunctionTool
 from backend.tools.company_financial_statement_tool.rag_model import rag_tool
-from backend.tools.company_financial_statement_tool.yfinance_tool import financial_statement_tool
+# from backend.tools.company_financial_statement_tool.yfinance_tool import financial_statement_tool
 from backend.tools.historical_price_tool.yfinance_tool import historical_price_tool
 from backend.tools.company_fundamental_tool.yfinance_tools import fundamental_tool
 from backend.tools.news_tool.gnews_tool import get_gnews_articles
@@ -119,31 +119,31 @@ TOOLS = [
     ),
 
     # Financial statement tool: exact income/balance/cashflow numbers
-    FunctionTool.from_defaults(
-        fn=financial_statement_tool,
-        name="financial_statement_tool",
-        description=(
-            "Use this tool ONLY when the user asks for exact structured financial numbers "
-            "from income statement, balance sheet, or cash flow statement.\n\n"
-            
-            "INPUT SHOULD BE IN THE FOLLOWING STRUCTURED FORMAT:\n"
-            " Date: YYYY-MM-DD\nCompany: Company Name\nFinancial Year: YYYY-YY\nQuarter: Q1/Q2/Q3/Q4/None\nQuestion: User Question\n\n"
-            
-            "Supports both quarterly data (Q1, Q2, Q3, Q4) and annual data.\n\n"
-
-            "Examples:\n"
-            "- What was revenue in Q2 2025-26?\n"
-            "- Give net income for FY 2025-26.\n"
-            "- Show EPS for Q3 2025-26.\n"
-            "- Total assets in Q4 2025-26.\n\n"
-
-            "This tool returns raw financial statement data.\n\n"
-
-            "Do NOT use this tool for:\n"
-            "- Explanations\n"
-            "- Performance discussion\n"
-            "- Management commentary\n"
-            "- Stock price movement\n"
-        )
-    ),
+    # FunctionTool.from_defaults(
+    #     fn=financial_statement_tool,
+    #     name="financial_statement_tool",
+    #     description=(
+    #         "Use this tool ONLY when the user asks for exact structured financial numbers "
+    #         "from income statement, balance sheet, or cash flow statement.\n\n"
+    #
+    #         "INPUT SHOULD BE IN THE FOLLOWING STRUCTURED FORMAT:\n"
+    #         " Date: YYYY-MM-DD\nCompany: Company Name\nFinancial Year: YYYY-YY\nQuarter: Q1/Q2/Q3/Q4/None\nQuestion: User Question\n\n"
+    #
+    #         "Supports both quarterly data (Q1, Q2, Q3, Q4) and annual data.\n\n"
+    #
+    #         "Examples:\n"
+    #         "- What was revenue in Q2 2025-26?\n"
+    #         "- Give net income for FY 2025-26.\n"
+    #         "- Show EPS for Q3 2025-26.\n"
+    #         "- Total assets in Q4 2025-26.\n\n"
+    #
+    #         "This tool returns raw financial statement data.\n\n"
+    #
+    #         "Do NOT use this tool for:\n"
+    #         "- Explanations\n"
+    #         "- Performance discussion\n"
+    #         "- Management commentary\n"
+    #         "- Stock price movement\n"
+    #     )
+    # ),
 ]

@@ -63,7 +63,7 @@ system_prompt = (
 
     " Tool Selection Rules:\n" 
 
-    " - Exact financial numbers → financial_statement_tool\n" 
+    # " - Exact financial numbers → financial_statement_tool\n"
     " - Valuation ratios or company fundamentals → fundamental_tool\n" 
     " - Historical stock price on specific date → historical_price_tool\n" 
     " - News, catalysts, or stock movement reasons → get_gnews_articles\n" 

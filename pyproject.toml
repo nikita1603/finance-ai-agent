@@ -22,6 +22,10 @@ dependencies = [
     "uvicorn",
     "llama-index-llms-google-genai",
     "llama-index-embeddings-huggingface",
+    "llama-index-retrievers-bm25",
+    "llama-index-postprocessor-flag-embedding-reranker",
+    "FlagEmbedding",
+    "transformers<5",
     "python-dotenv"
 ]
 

@@ -13,13 +13,15 @@ from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core import Settings
 import os
 
+
 import logging
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 logger = logging.getLogger(__name__)
 
 
 # ---------------- Local embeddings configuration ----------------
-# Use a small, fast sentence transformer for local embedding generation.
+# Use a local sentence transformer for embedding generation.
 embed_model = HuggingFaceEmbedding(
     model_name="sentence-transformers/all-MiniLM-L6-v2"
 )
@@ -76,6 +78,7 @@ def build_and_save(company_name):
 
 if __name__ == "__main__":
 
+    print("Starting index building process for all companies...")
     logger.info("Starting index building process for all companies...")
 
     # Example usage: build indexes for two companies included in the repo

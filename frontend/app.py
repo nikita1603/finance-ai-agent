@@ -1,67 +1,93 @@
-"""Simple Streamlit frontend for the Stocks AI Agent.
-
-This lightweight UI lets a user pick a date, company, financial year,
-and quarter and ask a natural language question. The app sends the
-formatted query to the backend `/ask` endpoint and displays the
-returned answer.
-
-Note: This file is intentionally minimal. It assumes the backend
-API is running locally at `http://127.0.0.1:8000`.
-"""
+"""Streamlit frontend for the Stocks AI Agent."""
 
 from datetime import date
-import streamlit as st
 import requests
+import streamlit as st
 
-
-st.title("💰 Stocks AI Agent (Gemini Powered)")
-
-st.write(
-    "Welcome to the Stocks AI Agent! This application allows you to ask "
-    "questions about specific stocks based on the date, company, financial "
-    "year, and quarter. The agent will fetch relevant news articles and "
-    "provide insights to help you make informed decisions."
+# ── Page config ──────────────────────────────────────────────────────────────
+st.set_page_config(
+    page_title="Stocks AI Agent",
+    page_icon="📈",
+    layout="wide",
 )
 
+# ── Session state ─────────────────────────────────────────────────────────────
+if "history" not in st.session_state:
+    st.session_state.history = []  # list of {"role": ..., "content": ...}
 
-# Layout: four compact columns for date/company/year/quarter selections
-col1, col2, col3, col4 = st.columns(4)
+# ── Sidebar ───────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.title("📈 Stocks AI Agent")
+    st.caption("Powered by Gemini · LlamaIndex")
+    st.divider()
 
-with col1:
-    
-    selected_date = st.date_input(
-    "Select Date",
-    value=date.today()  # default = today
+    selected_date = st.date_input("Date", value=date.today())
+
+    company = st.selectbox(
+        "Company",
+        ["HDFC", "RELIANCE", "TCS", "INFOSYS", "WIPRO"],
     )
 
-with col2: company = st.selectbox("Select Company", ["HDFC", "RELIANCE"])
+    financial_year = st.selectbox(
+        "Financial Year",
+        ["2025-2026", "2024-2025", "2023-2024"],
+    )
 
-with col3: financial_year = st.selectbox("Select Financial Year", ["2025-2026"])
+    quarter = st.selectbox(
+        "Quarter",
+        ["None", "Q1", "Q2", "Q3", "Q4"],
+        index=0,
+    )
 
-with col4:    quarter = st.selectbox("Select Quarter", ["Q1", "Q2", "Q3", "Q4","None"], index=4)
+    st.divider()
+    if st.button("🗑️ Clear chat", use_container_width=True):
+        st.session_state.history = []
+        st.rerun()
 
-# Query input field for free-text questions
-query = st.text_input("Ask a question related to the stock selected:")
+# ── Main area ─────────────────────────────────────────────────────────────────
+st.header("💬 Ask about your stock")
 
+# Render existing chat history
+for msg in st.session_state.history:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-if st.button("Ask"):
-    if query:
-        # Format the query the backend expects (same template used elsewhere)
-        final_query = (
-            f"Date: {selected_date}\n"
-            f"Company: {company}\n"
-            f"Financial Year: {financial_year}\n"
-            f"Quarter: {quarter}\n"
-            f"Question: {query}"
-        )
+# Input at the bottom
+query = st.chat_input("Ask a question about the selected stock…")
 
-        # Call the local backend API and display the structured answer
-        response = requests.post("http://127.0.0.1:8000/ask", json={"query": final_query})
-        st.write("**Answer:**", response.json().get("answer"))
-    else:
-        st.warning("Please enter a question.")
+if query:
+    # Show the user's message immediately
+    st.session_state.history.append({"role": "user", "content": query})
+    with st.chat_message("user"):
+        st.markdown(query)
 
+    # Build the structured prompt
+    final_query = (
+        f"Date: {selected_date}\n"
+        f"Company: {company}\n"
+        f"Financial Year: {financial_year}\n"
+        f"Quarter: {quarter}\n"
+        f"Question: {query}"
+    )
 
-# if __name__ == "__main__":
-#     st.write("Finance AI Agent is running. Upload your documents and ask questions!")
+    # Call the backend
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking…"):
+            try:
+                resp = requests.post(
+                    "http://127.0.0.1:8000/ask",
+                    json={"query": final_query},
+                    timeout=120,
+                )
+                resp.raise_for_status()
+                answer = resp.json().get("answer", "No answer returned.")
+            except requests.exceptions.ConnectionError:
+                answer = "⚠️ Could not reach the backend. Make sure the server is running on port 8000."
+            except requests.exceptions.Timeout:
+                answer = "⚠️ The request timed out. The agent may be overloaded — please try again."
+            except Exception as exc:
+                answer = f"⚠️ Unexpected error: {exc}"
 
+        st.markdown(answer)
+
+    st.session_state.history.append({"role": "assistant", "content": answer})
