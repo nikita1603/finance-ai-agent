@@ -52,7 +52,8 @@ def print_results(results: List[Dict], metrics: Dict) -> None:
         # Multi-hop & response presence information
         print(
             f"  Multi-hop {'PASS' if r['multi_hop_correct'] else 'FAIL'} | "
-            f"Response: {'yes' if r['has_response'] else 'no'} ({r['response_length']} chars)"
+            f"Response: {'yes' if r['has_response'] else 'no'} ({r['response_length']} chars) | "
+            f"Latency: {r['latency_s']:.2f}s"
         )
 
         # RAG/source checks (only print when relevant)
@@ -82,4 +83,7 @@ def print_results(results: List[Dict], metrics: Dict) -> None:
         print(f"Sources precision:  {metrics['sources_avg_precision']:.0%}")
         print(f"Sources recall:     {metrics['sources_avg_recall']:.0%}")
 
+    print(f"Latency avg:        {metrics['latency_avg_s']:.2f}s")
+    print(f"Latency p95:        {metrics['latency_p95_s']:.2f}s")
+    print(f"Latency max:        {metrics['latency_max_s']:.2f}s")
     print(f"{'=' * 100}\n")

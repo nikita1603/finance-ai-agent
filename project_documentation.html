@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance AI Agent — Technical Documentation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #fff;
+  }
+
+  /* ── Cover Page ─────────────────────────────────────── */
+  .cover {
+    height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: white;
+    page-break-after: always;
+    padding: 60px;
+  }
+  .cover .badge {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+  .cover h1 {
+    font-size: 42px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+  .cover .subtitle {
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 48px;
+    max-width: 560px;
+  }
+  .cover .divider {
+    width: 60px;
+    height: 3px;
+    background: #e94560;
+    margin: 0 auto 48px;
+    border-radius: 2px;
+  }
+  .cover .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 560px;
+    width: 100%;
+  }
+  .cover .meta-item {
+    background: rgba(255,255,255,0.07);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .cover .meta-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-bottom: 4px;
+  }
+  .cover .meta-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.92);
+  }
+
+  /* ── TOC ─────────────────────────────────────────────── */
+  .toc-page {
+    padding: 60px 80px;
+    page-break-after: always;
+    min-height: 100vh;
+  }
+  .toc-page h2 {
+    font-size: 22px;
+    color: #0f3460;
+    margin-bottom: 32px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #e94560;
+  }
+  .toc-list { list-style: none; }
+  .toc-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px dotted #ddd;
+    font-size: 13px;
+  }
+  .toc-list li.section {
+    font-weight: 700;
+    font-size: 14px;
+    color: #0f3460;
+    margin-top: 12px;
+    border-bottom: none;
+  }
+  .toc-list li.sub {
+    padding-left: 24px;
+    color: #444;
+  }
+  .toc-page-num { color: #e94560; font-weight: 600; font-size: 12px; }
+
+  /* ── Content pages ───────────────────────────────────── */
+  .page {
+    padding: 56px 80px;
+    page-break-after: always;
+    min-height: 100vh;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  /* Section headings */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .section-num {
+    background: #0f3460;
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  h2 { font-size: 22px; color: #0f3460; }
+  h3 { font-size: 16px; color: #0f3460; margin: 24px 0 10px; }
+  h4 { font-size: 13px; color: #333; margin: 18px 0 8px; font-weight: 700; }
+  p  { margin-bottom: 12px; color: #333; }
+
+  /* Highlight box */
+  .highlight {
+    background: #f0f4ff;
+    border-left: 4px solid #0f3460;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 12.5px;
+    color: #222;
+  }
+  .highlight.warn {
+    background: #fff8f0;
+    border-color: #e94560;
+  }
+  .highlight.green {
+    background: #f0fff4;
+    border-color: #38a169;
+  }
+
+  /* Code blocks */
+  pre {
+    background: #1a1a2e;
+    color: #e2e8f0;
+    padding: 18px 20px;
+    border-radius: 8px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 14px 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  code {
+    background: #eef1f7;
+    color: #0f3460;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 11.5px;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 12px;
+  }
+  th {
+    background: #0f3460;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #e8ecf0;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #f7f9fc; }
+  tr:hover td { background: #eef2ff; }
+
+  /* Pipeline diagram */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .pipe-step {
+    background: #0f3460;
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 100px;
+  }
+  .pipe-step.alt { background: #e94560; }
+  .pipe-step.green { background: #38a169; }
+  .pipe-arrow {
+    color: #aaa;
+    font-size: 18px;
+    padding: 0 6px;
+    font-weight: 300;
+  }
+
+  /* Tool card */
+  .tool-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin: 14px 0;
+    background: #fafbff;
+  }
+  .tool-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .tool-badge {
+    background: #0f3460;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-family: monospace;
+    font-weight: 600;
+  }
+  .tool-badge.news { background: #718096; }
+  .tool-badge.price { background: #2d7d46; }
+  .tool-badge.fund { background: #6b46c1; }
+  .tool-title { font-weight: 700; font-size: 14px; color: #0f3460; }
+
+  /* Tag pills */
+  .tag {
+    display: inline-block;
+    background: #eef2ff;
+    color: #3949ab;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin: 2px;
+    font-weight: 500;
+  }
+
+  /* Numbered list styled */
+  .num-list { padding-left: 0; list-style: none; }
+  .num-list li {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .num-circle {
+    background: #e94560;
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  /* Metric boxes */
+  .metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .metric-box {
+    background: #f0f4ff;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .metric-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0f3460;
+    display: block;
+  }
+  .metric-label {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    color: #aaa;
+    font-size: 10px;
+    padding-top: 24px;
+    border-top: 1px solid #eee;
+    margin-top: 40px;
+  }
+
+  @media print {
+    .page { padding: 40px 56px; }
+    .cover { height: 100vh; }
+    pre { font-size: 10.5px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     COVER PAGE
+═══════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="badge">Technical Documentation</div>
+  <h1>Finance AI Agent</h1>
+  <p class="subtitle">A Retrieval-Augmented Generation system for intelligent financial analysis of Indian equities</p>
+  <div class="divider"></div>
+  <div class="meta-grid">
+    <div class="meta-item">
+      <div class="meta-label">Version</div>
+      <div class="meta-value">2.0</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">LLM</div>
+      <div class="meta-value">Gemini 2.5 Flash</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Framework</div>
+      <div class="meta-value">LlamaIndex</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Backend</div>
+      <div class="meta-value">FastAPI</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Frontend</div>
+      <div class="meta-value">Streamlit</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-label">Date</div>
+      <div class="meta-value">April 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+═══════════════════════════════════════════════════════════ -->
+<div class="toc-page">
+  <h2>Table of Contents</h2>
+  <ul class="toc-list">
+    <li class="section"><span>1. Project Overview</span></li>
+    <li class="sub"><span>1.1 What the system does</span><span class="toc-page-num">3</span></li>
+    <li class="sub"><span>1.2 Why we built it this way</span><span class="toc-page-num">3</span></li>
+    <li class="sub"><span>1.3 High-level architecture</span><span class="toc-page-num">3</span></li>
+
+    <li class="section"><span>2. Technology Stack</span></li>
+    <li class="sub"><span>2.1 Complete library reference</span><span class="toc-page-num">4</span></li>
+    <li class="sub"><span>2.2 Why each tool was chosen</span><span class="toc-page-num">4</span></li>
+
+    <li class="section"><span>3. Data Ingestion & Index Building</span></li>
+    <li class="sub"><span>3.1 Document loading</span><span class="toc-page-num">5</span></li>
+    <li class="sub"><span>3.2 Chunking strategy</span><span class="toc-page-num">5</span></li>
+    <li class="sub"><span>3.3 Embedding & vector store</span><span class="toc-page-num">5</span></li>
+    <li class="sub"><span>3.4 Incremental indexing</span><span class="toc-page-num">5</span></li>
+
+    <li class="section"><span>4. RAG Pipeline (Core)</span></li>
+    <li class="sub"><span>4.1 Query parsing</span><span class="toc-page-num">6</span></li>
+    <li class="sub"><span>4.2 Query enrichment</span><span class="toc-page-num">6</span></li>
+    <li class="sub"><span>4.3 Hybrid retrieval — Vector + BM25</span><span class="toc-page-num">6</span></li>
+    <li class="sub"><span>4.4 Reciprocal Rank Fusion</span><span class="toc-page-num">7</span></li>
+    <li class="sub"><span>4.5 Cross-encoder reranking</span><span class="toc-page-num">7</span></li>
+    <li class="sub"><span>4.6 Grounded generation</span><span class="toc-page-num">7</span></li>
+    <li class="sub"><span>4.7 BM25 persistence &amp; caching</span><span class="toc-page-num">8</span></li>
+
+    <li class="section"><span>5. Agent System</span></li>
+    <li class="sub"><span>5.1 What is a FunctionAgent?</span><span class="toc-page-num">8</span></li>
+    <li class="sub"><span>5.2 System prompt design</span><span class="toc-page-num">9</span></li>
+    <li class="sub"><span>5.3 Tool routing logic</span><span class="toc-page-num">9</span></li>
+
+    <li class="section"><span>6. The Four Tools</span></li>
+    <li class="sub"><span>6.1 rag_tool</span><span class="toc-page-num">10</span></li>
+    <li class="sub"><span>6.2 fundamental_tool</span><span class="toc-page-num">10</span></li>
+    <li class="sub"><span>6.3 historical_price_tool</span><span class="toc-page-num">11</span></li>
+    <li class="sub"><span>6.4 get_gnews_articles</span><span class="toc-page-num">11</span></li>
+
+    <li class="section"><span>7. API & Frontend</span></li>
+    <li class="sub"><span>7.1 FastAPI backend</span><span class="toc-page-num">12</span></li>
+    <li class="sub"><span>7.2 Retry & rate-limit handling</span><span class="toc-page-num">12</span></li>
+    <li class="sub"><span>7.3 Streamlit frontend</span><span class="toc-page-num">12</span></li>
+
+    <li class="section"><span>8. Evaluation Framework</span></li>
+    <li class="sub"><span>8.1 End-to-end agent evaluation</span><span class="toc-page-num">13</span></li>
+    <li class="sub"><span>8.2 Hallucination evaluation</span><span class="toc-page-num">13</span></li>
+    <li class="sub"><span>8.3 Latest evaluation results</span><span class="toc-page-num">14</span></li>
+
+    <li class="section"><span>9. Performance Improvements</span></li>
+    <li class="sub"><span>9.1 All improvements made and why</span><span class="toc-page-num">15</span></li>
+
+    <li class="section"><span>10. How to Run</span></li>
+    <li class="sub"><span>10.1 Setup, server, UI, evaluation</span><span class="toc-page-num">16</span></li>
+  </ul>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 1 — PROJECT OVERVIEW
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">1</div>
+    <h2>Project Overview</h2>
+  </div>
+
+  <h3>1.1 What the system does</h3>
+  <p>The Finance AI Agent answers natural language questions about Indian equities — specifically HDFC Bank and Reliance Industries — by intelligently routing each question to the right data source and synthesizing a structured, grounded answer.</p>
+  <p>A user can ask questions like:</p>
+  <ul style="padding-left:20px; margin-bottom:12px; color:#333;">
+    <li style="margin-bottom:6px;">"What was HDFC Bank's PAT in Q3 FY26?" → fetches from indexed earnings PDFs</li>
+    <li style="margin-bottom:6px;">"Why did Reliance stock fall on 2026-01-15?" → fetches price data + news articles</li>
+    <li style="margin-bottom:6px;">"What is HDFC's current P/E ratio?" → fetches live market fundamentals</li>
+    <li style="margin-bottom:6px;">"Summarize management commentary from Q4 FY26 earnings" → fetches from RAG documents</li>
+  </ul>
+
+  <h3>1.2 Why we built it this way</h3>
+  <p>The core problem with financial Q&A is <strong>hallucination</strong> — LLMs trained on general data confidently state wrong numbers. Our design solves this in three ways:</p>
+  <ul class="num-list">
+    <li><div class="num-circle">1</div><div><strong>Never answer from memory.</strong> The agent always calls a tool. Tools either return grounded document context (RAG), live market data (yfinance), or real news (GNews). The LLM only synthesizes — it never invents.</div></li>
+    <li><div class="num-circle">2</div><div><strong>Hybrid retrieval + reranking.</strong> Using both dense vector search and BM25 keyword search, then cross-encoder reranking, maximizes the chance of pulling the exact chunk that contains the answer.</div></li>
+    <li><div class="num-circle">3</div><div><strong>Strict generation prompt.</strong> The RAG generation step explicitly prohibits the LLM from using outside knowledge and mandates citing sources.</div></li>
+  </ul>
+
+  <h3>1.3 High-level architecture</h3>
+  <div class="pipeline">
+    <div class="pipe-step">User Query<br><small style="font-weight:400;font-size:10px;">(Streamlit UI)</small></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">FastAPI<br><small style="font-weight:400;font-size:10px;">/ask endpoint</small></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step alt">FunctionAgent<br><small style="font-weight:400;font-size:10px;">Gemini 2.5 Flash</small></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step">Tool Selection<br><small style="font-weight:400;font-size:10px;">4 tools</small></div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step green">Answer<br><small style="font-weight:400;font-size:10px;">Structured</small></div>
+  </div>
+  <p style="margin-top:8px;">When the agent selects <code>rag_tool</code>, an additional sub-pipeline runs:</p>
+  <div class="pipeline">
+    <div class="pipe-step" style="font-size:10.5px;">Parse Query</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="font-size:10.5px;">Enrich Query</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="font-size:10.5px;">Vector + BM25</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step alt" style="font-size:10.5px;">RRF Fusion</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="font-size:10.5px;">Reranker</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step green" style="font-size:10.5px;">Gemini Gen</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 2 — TECHNOLOGY STACK
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">2</div>
+    <h2>Technology Stack</h2>
+  </div>
+
+  <h3>2.1 Complete library reference</h3>
+  <table>
+    <tr><th>Library / Tool</th><th>Version</th><th>Purpose</th></tr>
+    <tr><td><code>llama-index-core</code></td><td>Latest</td><td>Core RAG framework — index building, retrieval, agents, callbacks</td></tr>
+    <tr><td><code>llama-index-llms-google-genai</code></td><td>Latest</td><td>Official LlamaIndex wrapper for Google Gemini with native tool-calling</td></tr>
+    <tr><td><code>llama-index-embeddings-huggingface</code></td><td>Latest</td><td>Loads local HuggingFace sentence-transformer models for embedding</td></tr>
+    <tr><td><code>llama-index-retrievers-bm25</code></td><td>Latest</td><td>BM25 keyword retriever for the hybrid search pipeline</td></tr>
+    <tr><td><code>llama-index-postprocessor-flag-embedding-reranker</code></td><td>Latest</td><td>Cross-encoder reranker using BAAI/bge-reranker-base</td></tr>
+    <tr><td><code>google-genai</code></td><td>Latest</td><td>Raw Gemini SDK — used inside <code>rag_tool</code> for grounded generation</td></tr>
+    <tr><td><code>sentence-transformers</code></td><td>Latest</td><td>Hosts <code>all-MiniLM-L6-v2</code> embedding model locally</td></tr>
+    <tr><td><code>FlagEmbedding</code></td><td>Latest</td><td>Provides <code>BAAI/bge-reranker-base</code> cross-encoder for reranking</td></tr>
+    <tr><td><code>fastapi</code></td><td>Latest</td><td>Async REST API framework — serves the <code>/ask</code> endpoint</td></tr>
+    <tr><td><code>uvicorn</code></td><td>Latest</td><td>ASGI server that runs the FastAPI application</td></tr>
+    <tr><td><code>pydantic</code></td><td>v2</td><td>Request/response validation in FastAPI</td></tr>
+    <tr><td><code>streamlit</code></td><td>Latest</td><td>Interactive web UI for the chat interface</td></tr>
+    <tr><td><code>yfinance</code></td><td>Latest</td><td>Yahoo Finance wrapper — historical prices and fundamental ratios</td></tr>
+    <tr><td><code>requests</code></td><td>Latest</td><td>HTTP client for GNews API calls</td></tr>
+    <tr><td><code>python-dotenv</code></td><td>Latest</td><td>Loads <code>GEMINI_API_KEY</code> and <code>GNEWS_API_KEY</code> from <code>.env</code></td></tr>
+    <tr><td><code>pandas</code></td><td>Latest</td><td>CSV reading in evaluation harness; date manipulation in news tool</td></tr>
+  </table>
+
+  <h3>2.2 Why each key tool was chosen</h3>
+
+  <h4>Gemini 2.5 Flash — not GPT-4 or Claude</h4>
+  <p>Gemini 2.5 Flash has native function/tool-calling support in the Google GenAI SDK, extremely low latency, and a large context window (1M tokens). For a financial assistant that needs to reason about long document context and call multiple tools in sequence, Flash is significantly faster and cheaper than Opus-class models while maintaining quality.</p>
+
+  <h4>LlamaIndex — not LangChain</h4>
+  <p>LlamaIndex is purpose-built for RAG and document-based question answering. It provides built-in <code>VectorStoreIndex</code>, <code>BM25Retriever</code>, <code>QueryFusionRetriever</code>, and <code>FlagEmbeddingReranker</code> — all the pipeline components we need, composable and well-integrated. LangChain requires more manual assembly for equivalent RAG quality.</p>
+
+  <h4>all-MiniLM-L6-v2 — local embeddings</h4>
+  <p>This 22M-parameter model runs locally with no API cost, generates 384-dimensional vectors, and is fast (~50ms per batch). For a project querying PDFs at query time, local embeddings avoid API latency and cost. The model is well-tested on English financial text.</p>
+
+  <h4>BAAI/bge-reranker-base — cross-encoder reranker</h4>
+  <p>A bi-encoder (like MiniLM) compresses each document into a single vector — it loses nuance. A cross-encoder reads the query and document together, capturing token-level interactions. BGE-reranker-base is small (278M params) yet dramatically improves precision by re-scoring each retrieved chunk against the full query context.</p>
+
+  <h4>FastAPI — not Flask or Django</h4>
+  <p>FastAPI is natively async, which matters because our <code>/ask</code> endpoint awaits an async agent (<code>agent.run()</code>) and streams events. Flask is synchronous by default; Django is too heavy for a single-endpoint API.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 3 — DATA INGESTION
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">3</div>
+    <h2>Data Ingestion &amp; Index Building</h2>
+  </div>
+
+  <p>Before any query can be answered from documents, the PDFs must be processed and stored in a searchable format. This is a one-time (or incremental) operation run via <code>build_index.py</code>.</p>
+
+  <h3>3.1 Document loading</h3>
+  <p>LlamaIndex's <code>SimpleDirectoryReader</code> loads all files from <code>data/{company}/</code>, including nested folders. The <code>filename_as_id=True</code> flag sets each document's ID to its file path, enabling incremental updates — if a PDF is replaced, the old version is removed and the new one re-embedded.</p>
+<pre>documents = SimpleDirectoryReader(
+    input_dir="data/hdfc",
+    recursive=True,
+    filename_as_id=True   # enables incremental refresh
+).load_data()</pre>
+
+  <h3>3.2 Chunking strategy</h3>
+  <p>Long PDFs cannot be searched as a whole — they must be split into smaller pieces called <strong>chunks</strong> (also called nodes). The <code>SentenceSplitter</code> splits on sentence boundaries to avoid cutting mid-sentence.</p>
+
+  <table>
+    <tr><th>Parameter</th><th>Value</th><th>Why</th></tr>
+    <tr><td><code>chunk_size</code></td><td>512 tokens</td><td>Fits dense financial text while staying within retriever scoring limits</td></tr>
+    <tr><td><code>chunk_overlap</code></td><td>100 tokens</td><td>Overlapping windows ensure numbers that span sentence boundaries are not split between two non-overlapping chunks</td></tr>
+  </table>
+
+  <div class="highlight warn">
+    <strong>Known limitation:</strong> Financial PDFs contain tables where a single row might span 600+ tokens. A 512-token chunk can cut through a table row, splitting a number from its label. Increasing <code>chunk_size</code> to 768 and <code>chunk_overlap</code> to 150 would improve retrieval accuracy for tabular data.
+  </div>
+
+  <h3>3.3 Embedding &amp; vector store</h3>
+  <p>Each chunk is passed through <code>all-MiniLM-L6-v2</code> to produce a 384-dimensional embedding vector. These vectors — along with the raw chunk text and metadata (filename, page number) — are stored in a <code>VectorStoreIndex</code> and persisted to disk at <code>vector_store/{company}/</code>.</p>
+  <p>After persisting the vector index, <code>build_index.py</code> also saves the node corpus as JSON so BM25 can be rebuilt quickly on demand. Both artifacts are built once and reused at query time:</p>
+  <table>
+    <tr><th>File</th><th>Contents</th><th>Used by</th></tr>
+    <tr><td><code>vector_store.json</code></td><td>384-dim embedding vectors for all chunks</td><td>Vector retriever (similarity search)</td></tr>
+    <tr><td><code>docstore.json</code></td><td>Raw chunk text + metadata (filename, page)</td><td>BM25 build, context assembly, reranker</td></tr>
+    <tr><td><code>index_store.json</code></td><td>Index metadata and node mappings</td><td>LlamaIndex internal bookkeeping</td></tr>
+    <tr><td><code>bm25_nodes.json</code></td><td>Node text + metadata for all chunks (plain JSON)</td><td>BM25 rebuild at query time</td></tr>
+  </table>
+
+  <h3>3.4 Incremental indexing</h3>
+  <p>On subsequent runs, if the <code>vector_store/{company}/</code> folder already exists, the script calls <code>index.refresh_ref_docs()</code> instead of rebuilding from scratch. This only re-embeds new or changed files:</p>
+<pre># Only re-embeds new/changed files
+refreshed = index.refresh_ref_docs(documents)
+new_count = sum(refreshed)
+
+# Remove PDFs that were deleted from data/
+deleted_ids = indexed_doc_ids - current_doc_ids
+for doc_id in deleted_ids:
+    index.delete_ref_doc(doc_id, delete_from_docstore=True)</pre>
+
+  <p>This means adding a new quarterly PDF (e.g. Q4 FY26) only re-embeds that one file, not the entire corpus.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 4 — RAG PIPELINE
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">4</div>
+    <h2>RAG Pipeline (Core)</h2>
+  </div>
+
+  <p>When the agent calls <code>rag_tool</code>, a 6-step pipeline runs to retrieve relevant document chunks and generate a grounded answer. This is the most technically sophisticated part of the system.</p>
+
+  <h3>4.1 Query parsing</h3>
+  <p>The agent passes a structured multi-line string to every tool. The parser extracts five fields:</p>
+<pre>Date: 2026-02-20
+Company: HDFC
+Financial Year: 2025-26
+Quarter: Q3
+Question: What was HDFC Bank's PAT in Q3 FY26?</pre>
+  <p>Company names are lower-cased to match the <code>vector_store/hdfc/</code> folder name.</p>
+
+  <h3>4.2 Query enrichment</h3>
+  <p>The raw question is enriched with quarter and financial year hints before retrieval. This biases both the vector search and BM25 toward chunks that explicitly mention the target period:</p>
+<pre># Before: "What was PAT in Q3 FY26?"
+# After:  "What was PAT in Q3 FY26? (Related to quarter 3 (Q3)) (For financial year 2025-26)"</pre>
+  <p>The same enriched query is passed to the <strong>reranker</strong> so the cross-encoder scores chunks against the full period-aware context, not just the bare question.</p>
+
+  <h3>4.3 Hybrid retrieval — Vector + BM25</h3>
+  <p>We use two fundamentally different retrieval methods and combine them. Each has strengths the other lacks:</p>
+
+  <table>
+    <tr><th>Method</th><th>How it works</th><th>Good at</th><th>Weak at</th></tr>
+    <tr>
+      <td><strong>Vector search</strong></td>
+      <td>Computes cosine similarity between query embedding and chunk embeddings</td>
+      <td>Semantic meaning — finds paraphrases and related concepts</td>
+      <td>Exact terms, numbers, ticker symbols</td>
+    </tr>
+    <tr>
+      <td><strong>BM25</strong></td>
+      <td>Term frequency / inverse document frequency scoring over exact words</td>
+      <td>Exact keywords — company names, metric names, "NIM", "GNPA", "PAT"</td>
+      <td>Semantic similarity, synonyms</td>
+    </tr>
+  </table>
+
+  <p>For financial queries, both matter. "Net interest margin" should match a chunk that says "NIM" (keyword) and a chunk that discusses "spread between lending and borrowing rates" (semantic). Each retriever fetches the top-15 candidates independently.</p>
+
+  <h3>4.4 Reciprocal Rank Fusion (RRF)</h3>
+  <p>After the two retrievers return 15 chunks each, they are merged into a single ranked list using Reciprocal Rank Fusion. RRF does not require the scores from both systems to be on the same scale — it only uses rank positions.</p>
+  <p>The formula for each chunk is: <strong>RRF score = Σ 1 / (k + rank_i)</strong> where <em>k</em> = 60 (a smoothing constant) and <em>rank_i</em> is the chunk's rank in each retriever. A chunk ranked 1st by both retrievers scores much higher than one ranked 1st by only one.</p>
+
+  <h3>4.5 Cross-encoder reranking</h3>
+  <p>RRF gives us 15 fused candidates. We then pass all 15 to a cross-encoder reranker (<code>BAAI/bge-reranker-base</code>) that scores each <em>(enriched_query, chunk)</em> pair by reading them together — much more accurate than embedding similarity.</p>
+  <p>The reranker selects the top-6 most relevant chunks. These 6 chunks form the <strong>context</strong> passed to the generation step.</p>
+
+  <div class="highlight green">
+    <strong>Why this matters:</strong> Without reranking, a vector search might return the Q2 PAT figure when Q3 is requested, because the embeddings are similar. The cross-encoder, reading "Q3 FY26" in the query vs "Q2 FY26" in the chunk, scores that chunk low and promotes the correct Q3 chunk instead.
+  </div>
+
+  <h3>4.6 Grounded generation</h3>
+  <p>The top-6 chunks are assembled into a context string with source metadata, then passed to Gemini with a strict prompt:</p>
+<pre>STRICT INSTRUCTIONS:
+- Use ONLY the provided context.
+- Do NOT use outside knowledge.
+- Do NOT infer numerical values unless explicitly mentioned.
+- If the answer is not found, respond: "Not found in documents."
+- Cite sources: (Source: file_name, Page: page_number)</pre>
+  <p>Temperature is set to <strong>0.1</strong> for the generation call, making responses deterministic and reducing creative hallucination.</p>
+
+  <h3>4.7 BM25 persistence &amp; caching</h3>
+  <p>BM25 is built by tokenizing every chunk in the index and computing term frequencies — an O(n) operation over potentially hundreds of chunks. We solve this at two levels:</p>
+
+  <h4>Level 1 — Disk persistence (build_index.py)</h4>
+  <p>Just like vector embeddings are saved to <code>vector_store/{company}/</code>, the node corpus is saved to <code>vector_store/{company}/bm25_nodes.json</code> every time <code>build_index.py</code> runs. Each entry is plain JSON — chunk text, metadata, and node ID. This avoids rebuilding BM25 from raw PDFs at query time.</p>
+  <p><em>Why JSON and not pickle?</em> The BM25Retriever uses <code>pystemmer</code> internally, a Cython library whose objects cannot be serialized with Python's standard <code>pickle</code>. Storing raw node data as JSON sidesteps this entirely — the data is pure Python, always serializable, and BM25 rebuilds from it in under a second.</p>
+<pre># In build_index.py — runs once when indexing documents
+nodes_data = [
+    {"id_": node.node_id, "text": node.text, "metadata": node.metadata}
+    for node in index.docstore.docs.values()
+]
+with open("vector_store/hdfc/bm25_nodes.json", "w") as f:
+    json.dump(nodes_data, f)   # saved alongside embeddings</pre>
+
+  <h4>Level 2 — In-memory cache (rag_model.py)</h4>
+  <p>At query time, on the first request per company, the JSON file is loaded and a <code>BM25Retriever</code> is rebuilt from the node data. Every subsequent request reuses the in-memory instance — no disk I/O, no rebuild:</p>
+<pre>if company not in _bm25_cache:
+    with open(f"vector_store/{company}/bm25_nodes.json") as f:
+        nodes_data = json.load(f)
+    nodes = [TextNode(text=n["text"], metadata=n["metadata"], id_=n["id_"]) for n in nodes_data]
+    _bm25_cache[company] = BM25Retriever.from_defaults(nodes=nodes, similarity_top_k=15)
+bm25_retriever = _bm25_cache[company]   # instant on every request after first</pre>
+
+  <div class="highlight green">
+    <strong>Comparison with embeddings:</strong> Embeddings are built in <code>build_index.py</code> and loaded from disk at query time by LlamaIndex automatically. BM25 now follows the same pattern — build once, persist to disk, reconstruct on demand. The only difference is JSON vs. LlamaIndex's own binary format.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 5 — AGENT SYSTEM
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">5</div>
+    <h2>Agent System</h2>
+  </div>
+
+  <h3>5.1 What is a FunctionAgent?</h3>
+  <p>A <code>FunctionAgent</code> (from LlamaIndex) is an LLM that can call functions (tools) to gather information before formulating a response. It works in a <strong>ReAct loop</strong>: Reason → Act → Observe → Reason again.</p>
+
+  <div class="pipeline" style="flex-direction:column; align-items:flex-start; gap:8px;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="pipe-step" style="min-width:130px; font-size:11px;">1. Receive query</div>
+      <span style="color:#666; font-size:12px;">Agent reads the full structured input</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="pipe-step alt" style="min-width:130px; font-size:11px;">2. Reason</div>
+      <span style="color:#666; font-size:12px;">Gemini reads system prompt + query, decides which tool to call</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="pipe-step" style="min-width:130px; font-size:11px;">3. Call tool</div>
+      <span style="color:#666; font-size:12px;">Agent calls <code>rag_tool</code>, <code>fundamental_tool</code>, etc.</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="pipe-step alt" style="min-width:130px; font-size:11px;">4. Observe</div>
+      <span style="color:#666; font-size:12px;">Tool result is added to conversation context</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="pipe-step" style="min-width:130px; font-size:11px;">5. Repeat or answer</div>
+      <span style="color:#666; font-size:12px;">Agent either calls another tool or formulates final answer</span>
+    </div>
+  </div>
+
+  <p style="margin-top:14px;">The loop is capped at <strong>10 tool calls</strong> per query to prevent infinite chains on ambiguous inputs.</p>
+
+  <h3>5.2 System prompt design</h3>
+  <p>The system prompt is the agent's "constitution" — it defines behavior that applies to every single query. Key sections:</p>
+
+  <table>
+    <tr><th>Section</th><th>Purpose</th></tr>
+    <tr><td><strong>Critical Rules</strong></td><td>Hard constraints: never answer from memory, never fabricate numbers, always pass full structured input to tools</td></tr>
+    <tr><td><strong>Tool Selection Guide</strong></td><td>Explicit mapping of question types to tool names — reduces ambiguous tool selection</td></tr>
+    <tr><td><strong>When Data Is Not Found</strong></td><td>Instead of just "data not available", the agent must explain which tools were called, why data might be missing, and suggest alternatives</td></tr>
+    <tr><td><strong>Final Response Format</strong></td><td>Mandates: (1) Data Summary, (2) Analytical Interpretation, (3) Conclusion — consistent structured output</td></tr>
+  </table>
+
+  <h3>5.3 Tool routing logic</h3>
+  <p>The agent uses both the system prompt's tool selection guide and each tool's <code>description</code> string to decide which tool to call. Tool descriptions are written to be mutually exclusive — each has a clear "USE FOR" and "DO NOT USE FOR" section:</p>
+<pre># Example: agent sees this description for rag_tool:
+"USE THIS TOOL FOR:
+- Exact financial figures: revenue, PAT, NIM, GNPA, EPS...
+- Management commentary, earnings discussion, strategic guidance
+- Period-specific questions tied to a quarter or financial year
+
+DO NOT use for:
+- Live stock price or intraday data
+- Live valuation ratios (P/E, P/B) — use fundamental_tool
+- Recent news — use get_gnews_articles"</pre>
+
+  <p>This explicit boundary-setting prevents the agent from using <code>rag_tool</code> for live P/E ratios (where it would find no data) or <code>fundamental_tool</code> for historical quarter figures (where it would return current-only data).</p>
+
+  <div class="highlight">
+    <strong>LLM temperature = 0.1:</strong> The agent LLM (Gemini 2.5 Flash) is initialized with <code>temperature=0.1</code>. Low temperature means the model consistently makes the same tool selection for the same query type, reducing variance in routing behavior.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 6 — THE FOUR TOOLS
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">6</div>
+    <h2>The Four Tools</h2>
+  </div>
+
+  <!-- rag_tool -->
+  <div class="tool-card">
+    <div class="tool-card-header">
+      <span class="tool-badge">rag_tool</span>
+      <span class="tool-title">Document RAG Tool</span>
+    </div>
+    <p><strong>Data source:</strong> Indexed earnings PDFs, press releases, investor presentations stored in <code>vector_store/{company}/</code></p>
+    <p><strong>What it answers:</strong> Any question about a specific quarter or financial year — PAT, NIM, GNPA, CASA ratio, capital adequacy, deposits, advances, management outlook, earnings highlights, segment performance.</p>
+    <p><strong>Pipeline:</strong> Parse → Enrich query → Hybrid retrieval (Vector + BM25) → RRF Fusion → Cross-encoder reranking → Gemini grounded generation</p>
+    <p><strong>Returns:</strong> A grounded prose answer with source citations + a <code>[SOURCES_USED: ...]</code> marker parsed by the evaluation harness.</p>
+    <p><strong>Example:</strong></p>
+<pre>Input:  "What was HDFC Bank's PAT in Q3 FY26?"
+Output: "HDFC Bank reported a PAT of ₹16,736 crore for Q3 FY2025-26,
+         reflecting a 2.2% YoY growth. (Source: Q3FY26-earnings-presentation.pdf, Page: 4)"</pre>
+  </div>
+
+  <!-- fundamental_tool -->
+  <div class="tool-card">
+    <div class="tool-card-header">
+      <span class="tool-badge fund">fundamental_tool</span>
+      <span class="tool-title">Fundamentals Tool</span>
+    </div>
+    <p><strong>Data source:</strong> Yahoo Finance via <code>yfinance</code> library — live market data</p>
+    <p><strong>What it answers:</strong> Current valuation ratios and company profile metrics: Market Cap, Trailing P/E, Forward P/E, Price-to-Book, Dividend Yield, Beta, ROE, Profit Margins, Sector, Industry.</p>
+    <p><strong>Important limitation:</strong> Returns <em>current/latest</em> data only. Cannot answer "What was the P/E in Q3 FY26?" — for that, the answer does not exist in this tool.</p>
+    <p><strong>Company resolution:</strong> Company names are mapped to Yahoo Finance ticker symbols via <code>TICKER_MAP</code> in <code>utils.py</code>. HDFC → <code>HDFCBANK.NS</code>, Reliance → <code>RELIANCE.NS</code>.</p>
+<pre>Input:  "What is HDFC Bank's current P/E ratio?"
+Output: {"Company": "HDFC", "Fundamentals": {"HDFCBANK.NS": {"Trailing PE": 18.4, ...}}}</pre>
+  </div>
+
+  <!-- historical_price_tool -->
+  <div class="tool-card">
+    <div class="tool-card-header">
+      <span class="tool-badge price">historical_price_tool</span>
+      <span class="tool-title">Historical Price Tool</span>
+    </div>
+    <p><strong>Data source:</strong> Yahoo Finance OHLCV data via <code>yfinance</code></p>
+    <p><strong>What it answers:</strong> Open, High, Low, Close, Volume, and % change for a specific trading date.</p>
+    <p><strong>Non-trading day handling:</strong> If the requested date is a weekend or holiday, the tool looks backward up to 7 days to find the nearest trading session and clearly reports which actual date was used.</p>
+<pre>Input:  "How did HDFC stock perform on 2026-01-15?"
+Output: {"Requested Date": "2026-01-15", "Actual Trading Date Used": "2026-01-15",
+         "Open": 1842.50, "Close": 1798.30, "Percentage Change (%)": -2.40, ...}</pre>
+  </div>
+
+  <!-- get_gnews_articles -->
+  <div class="tool-card">
+    <div class="tool-card-header">
+      <span class="tool-badge news">get_gnews_articles</span>
+      <span class="tool-title">News Tool</span>
+    </div>
+    <p><strong>Data source:</strong> GNews API — real-time news aggregation, filtered to India, English language</p>
+    <p><strong>What it answers:</strong> Recent news, stock movement catalysts, regulatory updates, analyst actions, macro events affecting the company. Searches a 7-day window ending on the query date.</p>
+    <p><strong>Returns:</strong> List of article dicts with title, description, URL, published_at, and source name. The agent formats these as headline + 1-2 line summary + hyperlink.</p>
+<pre>Input:  "Why did Reliance stock fall on 2026-01-15?"
+Output: [{"title": "RIL Q3 results disappoint; EBITDA misses estimates",
+          "url": "https://...", "published_at": "2026-01-15T09:31:00Z", ...}]</pre>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 7 — API & FRONTEND
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">7</div>
+    <h2>API &amp; Frontend</h2>
+  </div>
+
+  <h3>7.1 FastAPI backend</h3>
+  <p>The backend exposes a single meaningful endpoint: <code>POST /ask</code>. The agent is initialized once at startup (module level) and reused across requests.</p>
+
+  <table>
+    <tr><th>Endpoint</th><th>Method</th><th>Purpose</th></tr>
+    <tr><td><code>/</code></td><td>GET</td><td>Health check — confirms server is running</td></tr>
+    <tr><td><code>/ask</code></td><td>POST</td><td>Accepts a <code>{"query": "..."}</code> body, runs the agent, returns answer + tools_used</td></tr>
+    <tr><td><code>/docs</code></td><td>GET</td><td>Auto-generated Swagger UI (built into FastAPI)</td></tr>
+  </table>
+
+  <p>The <code>/ask</code> handler streams agent events internally — every tool call and LLM token is logged — while returning a single JSON response to the caller:</p>
+<pre>{"answer": "HDFC Bank's PAT for Q3 FY26 was ₹16,736 crore...",
+ "tools_used": ["rag_tool"]}</pre>
+
+  <h3>7.2 Retry &amp; rate-limit handling</h3>
+  <p>Gemini's API can return <strong>503 (Service Unavailable)</strong> during high load or <strong>429 (Rate Limited)</strong> when request frequency exceeds quota. The <code>/ask</code> handler retries up to 4 times:</p>
+  <ul style="padding-left:20px; margin-bottom:12px; color:#333;">
+    <li style="margin-bottom:6px;"><strong>503:</strong> Exponential backoff (2s, 4s, 8s)</li>
+    <li style="margin-bottom:6px;"><strong>429:</strong> Parses the retry-after delay from the error message; adds a 2-second buffer. Falls back to exponential if no delay is specified.</li>
+    <li style="margin-bottom:6px;"><strong>Non-retryable errors:</strong> Returns HTTP 500 immediately with a safe error message</li>
+  </ul>
+  <p>If the agent LLM fails but tools already returned data, the fallback returns the raw tool outputs directly — the user still gets partial information rather than a blank error.</p>
+
+  <h3>7.3 Streamlit frontend</h3>
+  <p>The frontend is a single-page chat interface that assembles the structured query from sidebar inputs and displays the agent's response.</p>
+
+  <table>
+    <tr><th>UI Element</th><th>Purpose</th></tr>
+    <tr><td>Date picker (sidebar)</td><td>Sets the <code>Date:</code> field — used by news and price tools for time-scoping</td></tr>
+    <tr><td>Company selector</td><td>Currently HDFC / Reliance — maps to indexed vector stores</td></tr>
+    <tr><td>Financial Year selector</td><td>Sets the <code>Financial Year:</code> field for RAG retrieval enrichment</td></tr>
+    <tr><td>Quarter selector</td><td>Q1–Q4 or None — fine-tunes RAG retrieval to specific quarter</td></tr>
+    <tr><td>Example question buttons</td><td>One-click starters for common query types</td></tr>
+    <tr><td>Tools used badges</td><td>Shows which tools the agent called (RAG, News, Price, Fundamentals)</td></tr>
+    <tr><td>Sources expander</td><td>Lists the PDF filenames the RAG tool retrieved from</td></tr>
+  </table>
+
+  <p>The frontend calls <code>http://127.0.0.1:8000/ask</code> with a 120-second timeout. Errors (connection refused, timeout, HTTP 500) are caught and displayed as friendly warning messages.</p>
+
+  <h4>Source marker stripping</h4>
+  <p>The <code>rag_tool</code> appends a <code>[SOURCES_USED: file1.pdf; file2.pdf]</code> tag to its response for the evaluation harness to parse. The frontend's <code>parse_answer()</code> function strips this marker before displaying the answer to the user.</p>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 8 — EVALUATION FRAMEWORK
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">8</div>
+    <h2>Evaluation Framework</h2>
+  </div>
+
+  <p>The system has two complementary evaluation modes, each measuring a different layer of the pipeline. Both run directly against the Python code — no running server needed.</p>
+
+  <h3>8.1 End-to-end Agent Evaluation (<code>evaluate.py</code>)</h3>
+  <p>Runs the full agent against 30 test cases from <code>evaluation_sample.csv</code> and measures how well the agent routes, retrieves, and responds.</p>
+
+  <table>
+    <tr><th>Metric</th><th>What it measures</th><th>Formula</th></tr>
+    <tr><td>Tools Accuracy</td><td>Did the agent call exactly the right set of tools?</td><td>exact_match / total_cases</td></tr>
+    <tr><td>Tools Precision</td><td>Of the tools called, what fraction were correct?</td><td>|called ∩ expected| / |called|</td></tr>
+    <tr><td>Tools Recall</td><td>Of the expected tools, what fraction were called?</td><td>|called ∩ expected| / |expected|</td></tr>
+    <tr><td>Keywords Recall</td><td>Do expected terms appear in the response?</td><td>found_keywords / total_expected_keywords</td></tr>
+    <tr><td>Multi-hop Accuracy</td><td>Did the agent call multiple tools when required?</td><td>(len(tools) > 1) == expected</td></tr>
+    <tr><td>Sources Precision</td><td>Of RAG sources used, what fraction were expected?</td><td>|used ∩ expected| / |used|</td></tr>
+    <tr><td>Sources Recall</td><td>Of expected sources, what fraction were retrieved?</td><td>|used ∩ expected| / |expected|</td></tr>
+    <tr><td>Latency (avg/p95/max)</td><td>End-to-end query time in seconds</td><td><code>time.perf_counter()</code> around agent.run()</td></tr>
+  </table>
+
+  <p>The test cases cover all four tools, single-hop and multi-hop scenarios, and questions for both HDFC and Reliance. Run with: <code>make evaluate</code></p>
+
+  <h3>8.2 Hallucination Evaluation (<code>hallucination_eval.py</code>)</h3>
+  <p>Bypasses the agent entirely and evaluates the RAG generation sub-pipeline in isolation. For each RAG test case, it calls <code>_retrieve_context</code> and <code>_generate_answer</code> directly, then asks Gemini to act as a hallucination judge.</p>
+
+  <div class="pipeline">
+    <div class="pipe-step" style="font-size:11px;">Retrieve context<br>(for test question)</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="font-size:11px;">Generate answer<br>(Gemini, temp=0.1)</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step alt" style="font-size:11px;">Hallucination judge<br>(Gemini)</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step green" style="font-size:11px;">has_hallucination<br>+ claims list</div>
+  </div>
+
+  <p>The judge receives the retrieved context, the question, and the generated answer, then returns structured JSON:</p>
+<pre>{
+  "has_hallucination": false,
+  "hallucinated_claims": [],
+  "verdict": "All claims in the answer are directly supported by the retrieved context."
+}</pre>
+
+  <p>This detects cases where the model confidently states numbers or facts not present in the retrieved chunks. Run with: <code>make hallucination</code></p>
+
+  <div class="highlight">
+    <strong>Why not RAGAS?</strong> RAGAS is a popular RAG evaluation library that does similar things. We built custom evaluators instead because (1) we use Gemini, not OpenAI, and (2) the custom approach integrates directly with our pipeline internals (<code>_retrieve_context</code>, <code>_generate_answer</code>), giving us precise control over what exactly is being evaluated.
+  </div>
+
+  <h3>8.3 Latest Evaluation Results</h3>
+  <p>Results from the evaluation run on 2026-04-23 against 30 agent test cases and 16 RAG-specific test cases.</p>
+
+  <h4>End-to-end Agent Evaluation (30 test cases)</h4>
+  <table>
+    <tr><th>Metric</th><th>Score</th></tr>
+    <tr><td>Tool accuracy</td><td><strong>87%</strong></td></tr>
+    <tr><td>Tool precision</td><td><strong>97%</strong></td></tr>
+    <tr><td>Tool recall</td><td><strong>93%</strong></td></tr>
+    <tr><td>Keyword recall</td><td><strong>86%</strong></td></tr>
+    <tr><td>Multi-hop accuracy</td><td><strong>93%</strong></td></tr>
+    <tr><td>Response rate</td><td><strong>100%</strong></td></tr>
+    <tr><td>RAG source precision</td><td>42%</td></tr>
+    <tr><td>RAG source recall</td><td>74%</td></tr>
+    <tr><td>Latency avg / p95 / max</td><td>36.5s / 84.7s / 93.2s</td></tr>
+  </table>
+
+  <h4 style="margin-top:16px;">RAG Hallucination Evaluation (16 RAG test cases)</h4>
+  <table>
+    <tr><th>Metric</th><th>Score</th></tr>
+    <tr><td>Cases evaluated</td><td>16</td></tr>
+    <tr><td>Hallucinations detected</td><td><strong>0</strong></td></tr>
+    <tr><td>Hallucination rate</td><td><strong>0.0%</strong></td></tr>
+  </table>
+  <p style="margin-top:8px;">All 16 RAG answers were fully grounded in the retrieved context. The strict "use ONLY the provided context" prompt in <code>_generate_answer</code> is working as intended.</p>
+
+  <div class="highlight">
+    <strong>Key observations:</strong> Tool routing is highly reliable (97% precision) and all 30 queries returned a non-empty answer. RAG source precision (42%) reflects cross-quarter chunk bleed — the retriever pulls chunks from adjacent quarters alongside the target quarter, a known limitation of the current hybrid retrieval approach. Hallucination rate of 0% confirms the generation prompt is grounding answers strictly in retrieved context.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 9 — PERFORMANCE IMPROVEMENTS
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">9</div>
+    <h2>Performance Improvements</h2>
+  </div>
+
+  <p>The following improvements were made to the original codebase. Each entry explains what changed, why it matters, and the impact.</p>
+
+  <table>
+    <tr><th style="width:22%">Change</th><th style="width:30%">What &amp; Where</th><th>Why it matters</th></tr>
+
+    <tr>
+      <td><strong>LLM temperature = 0.1</strong></td>
+      <td><code>agent_system.py</code> — GoogleGenAI init</td>
+      <td>Lower temperature reduces randomness in tool selection and response wording. Financial data should be deterministic — the same question should always route to the same tool.</td>
+    </tr>
+
+    <tr>
+      <td><strong>RAG generation temperature = 0.1</strong></td>
+      <td><code>rag_model.py</code> — GenerateContentConfig</td>
+      <td>Generation with temp=0 or ~0 prevents the model from "creatively" filling in numbers it didn't see in context. Critical for financial accuracy.</td>
+    </tr>
+
+    <tr>
+      <td><strong>max_function_calls 5 → 10</strong></td>
+      <td><code>agent_system.py</code> — FunctionAgent</td>
+      <td>Complex multi-tool queries (RAG + news + fundamentals) use 3 tools minimum. With a cap of 5, retries on 503/429 errors would cause silent failures. Raised to 10 to give headroom.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Enriched query passed to reranker</strong></td>
+      <td><code>rag_model.py</code> — reranker.postprocess_nodes</td>
+      <td>Previously, only the bare question was passed to the cross-encoder. The quarter/FY hints added during retrieval were discarded at reranking. Now the reranker sees the full enriched query, correctly penalizing wrong-period chunks.</td>
+    </tr>
+
+    <tr>
+      <td><strong>BM25 node corpus persisted to disk + in-memory cache</strong></td>
+      <td><code>build_index.py</code> + <code>rag_model.py</code></td>
+      <td>BM25 was rebuilt from scratch on every request (~0.5–1s). Now <code>build_index.py</code> saves the node corpus (text + metadata) to <code>vector_store/{company}/bm25_nodes.json</code>. At query time the JSON is loaded and BM25Retriever is rebuilt from those nodes in under a second, then cached in memory. Note: pickling the BM25Retriever object directly fails because <code>pystemmer</code> (used internally) contains Cython objects that cannot be serialized — JSON node storage is the correct workaround.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Removed context markers from agent output</strong></td>
+      <td><code>rag_model.py</code> — rag_tool return</td>
+      <td>The <code>[RAG_CONTEXT_START]...[RAG_CONTEXT_END]</code> block (all 6 raw chunks, ~3000 tokens) was appended to the tool result sent back to the agent. This bloated the agent's reasoning context on every tool call. Removed — the agent now only receives the synthesized answer + source names.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Removed contradictory rag_tool description</strong></td>
+      <td><code>tools.py</code> — FunctionTool description</td>
+      <td>The description simultaneously said "use for qualitative analysis" AND "do NOT use for exact numeric values". Since the financial_statement_tool was disabled, rag_tool is the only source for numbers — the description now clearly says so.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Removed dead code: eval_mode</strong></td>
+      <td><code>rag_model.py</code> — rag_tool signature</td>
+      <td>The <code>eval_mode</code> parameter was never used — both eval scripts bypass <code>rag_tool</code> and call <code>_retrieve_context</code> directly. Removed to simplify the function signature.</td>
+    </tr>
+
+    <tr>
+      <td><strong>gnews error returns descriptive string</strong></td>
+      <td><code>gnews_tool.py</code> — except block</td>
+      <td>On API failure, the tool returned <code>[]</code>. The agent interprets an empty list as "no news found" rather than "an error occurred". Now returns a descriptive error string so the agent can explain the failure to the user.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Improved system prompt — data not found</strong></td>
+      <td><code>agent_system.py</code> — system_prompt</td>
+      <td>Previously: just say "Data not available". Now: agent must explain which tools were searched, why data might be missing (e.g. quarter not indexed), and suggest what the user can do instead. Much more useful UX.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Latency metrics in evaluation</strong></td>
+      <td><code>evaluate.py</code>, <code>eval_utils.py</code></td>
+      <td>Added avg, p95, and max latency per run. p95 is the most useful metric for performance benchmarking — it captures real-world slow cases without being skewed by a single outlier.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Fixed stale CSV test cases</strong></td>
+      <td><code>evaluation_sample.csv</code></td>
+      <td>5 test cases expected <code>financial_statement_tool</code> which was removed from the system. These were always failing, artificially deflating the tools_accuracy metric. Updated to <code>rag_tool</code> and replaced with specific Q4 FY26 questions.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Fixed inflated source expectations</strong></td>
+      <td>Both CSV files</td>
+      <td>Q1 questions incorrectly listed Q1+Q2+Q3 PDFs as expected sources. Only Q1 source should be expected for Q1-specific questions. Fixed to correctly scope expected sources per quarter.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Module docstring placement</strong></td>
+      <td><code>rag_model.py</code></td>
+      <td>The module docstring was placed after all imports. Python only recognizes a string at the very top of a file as the module <code>__doc__</code>. Moved to line 1.</td>
+    </tr>
+
+    <tr>
+      <td><strong>Fixed duplicate import + inline import</strong></td>
+      <td><code>main.py</code></td>
+      <td>FastAPI was imported twice. <code>import re</code> was placed inside an <code>except</code> block (ran on every error). Both moved to top-level imports.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SECTION 10 — HOW TO RUN
+═══════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-num">10</div>
+    <h2>How to Run</h2>
+  </div>
+
+  <h3>10.1 Prerequisites</h3>
+  <ul style="padding-left:20px; color:#333; margin-bottom:16px;">
+    <li>Python 3.13+</li>
+    <li>A <code>.env</code> file in the project root with <code>GEMINI_API_KEY</code> and <code>GNEWS_API_KEY</code></li>
+  </ul>
+
+  <h3>10.2 First-time setup</h3>
+<pre># Create virtual environment and install all dependencies
+python3.13 -m venv venv
+venv\Scripts\pip install --upgrade pip
+venv\Scripts\pip install uv
+venv\Scripts\uv pip install -e .
+
+# Build vector indexes from PDFs in data/
+venv\Scripts\python backend\build_index.py</pre>
+
+  <h3>10.3 Running the application</h3>
+<pre># Terminal 1 — start FastAPI backend (port 8000)
+venv\Scripts\uvicorn backend.main:app --reload
+
+# Terminal 2 — start Streamlit frontend
+cd frontend
+..\venv\Scripts\streamlit run app.py</pre>
+  <p>Open <code>http://localhost:8501</code> for the UI. API docs at <code>http://localhost:8000/docs</code>.</p>
+
+  <h3>10.4 Running evaluations</h3>
+<pre># End-to-end agent evaluation (tool accuracy, keywords, latency) — 30 test cases
+venv\Scripts\python -m evaluation.evaluate evaluation\evaluation_sample.csv
+
+# RAG hallucination evaluation — 16 RAG test cases
+venv\Scripts\python -m evaluation.hallucination_eval evaluation\rag_evaluation_sample.csv</pre>
+
+  <h3>10.5 Adding a new company</h3>
+  <ul class="num-list">
+    <li><div class="num-circle">1</div><div>Create <code>data/{company_name}/</code> and add earnings PDFs</div></li>
+    <li><div class="num-circle">2</div><div>Add the company's Yahoo Finance ticker to <code>TICKER_MAP</code> in <code>backend/tools/utils.py</code></div></li>
+    <li><div class="num-circle">3</div><div>Run <code>venv\Scripts\python backend\build_index.py</code> to index the new documents</div></li>
+    <li><div class="num-circle">4</div><div>Add the company to the <code>company</code> selectbox in <code>frontend/app.py</code></div></li>
+    <li><div class="num-circle">5</div><div>Add test cases to the evaluation CSVs</div></li>
+  </ul>
+
+  <h3>10.6 Environment variables</h3>
+  <table>
+    <tr><th>Variable</th><th>Required</th><th>Where to get it</th></tr>
+    <tr><td><code>GEMINI_API_KEY</code></td><td>Yes</td><td>Google AI Studio → aistudio.google.com/app/api-keys</td></tr>
+    <tr><td><code>GNEWS_API_KEY</code></td><td>Yes</td><td>GNews developer portal → gnews.io</td></tr>
+  </table>
+
+  <div class="footer">
+    Finance AI Agent — Technical Documentation · Built with LlamaIndex, Gemini 2.5 Flash, FastAPI, Streamlit · April 2026
+  </div>
+</div>
+
+</body>
+</html>

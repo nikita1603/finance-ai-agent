@@ -76,6 +76,5 @@ def get_gnews_articles(user_query: str):
         return articles
 
     except Exception as e:
-        # Log the exception and return an empty list to indicate no data
-        logger.error(e)
-        return []
+        logger.error(f"GNews fetch failed: {e}")
+        return f"Could not retrieve news: {e}"

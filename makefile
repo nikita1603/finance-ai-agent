@@ -16,3 +16,6 @@ run_ui:
 
 evaluate:
 	venv/bin/python -m evaluation.evaluate evaluation/evaluation_sample.csv
+
+hallucination:
+	venv/bin/python -m evaluation.hallucination_eval evaluation/rag_evaluation_sample.csv

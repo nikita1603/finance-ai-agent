@@ -1,20 +1,3 @@
-import os
-from typing import Optional, Tuple
-
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-from llama_index.core import Settings
-from google import genai
-from llama_index.core import load_index_from_storage
-from llama_index.core.storage import StorageContext
-from llama_index.core.retrievers import QueryFusionRetriever
-from llama_index.core.schema import QueryBundle
-from llama_index.retrievers.bm25 import BM25Retriever
-from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
-from dotenv import load_dotenv
-
-import logging
-import time
-
 """RAG helper for company financial documents.
 
 This module implements a retrieval-augmented generation (RAG) helper that:
@@ -27,6 +10,25 @@ Retrieval pipeline:
   2. Cross-encoder reranking — bge-reranker-base trims to top-N most relevant nodes.
   3. Gemini generation — strictly context-grounded answer.
 """
+
+import json
+import os
+from typing import Optional, Tuple
+
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core import Settings
+from google import genai
+from google.genai import types as genai_types
+from llama_index.core import load_index_from_storage
+from llama_index.core.storage import StorageContext
+from llama_index.core.retrievers import QueryFusionRetriever
+from llama_index.core.schema import QueryBundle, TextNode
+from llama_index.retrievers.bm25 import BM25Retriever
+from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
+from dotenv import load_dotenv
+
+import logging
+import time
 
 logger = logging.getLogger(__name__)
 load_dotenv()
@@ -45,7 +47,15 @@ Settings.embed_model = embed_model
 # ---------------- Reranker (module-level to avoid reloading per call) ----------------
 # Cross-encoder reranker: scores every (query, node) pair directly — much more
 # accurate than bi-encoder similarity for final candidate selection.
-reranker = FlagEmbeddingReranker(model="BAAI/bge-reranker-base", top_n=4)
+reranker = FlagEmbeddingReranker(model="BAAI/bge-reranker-base", top_n=8)
+
+# Node cache: keyed by company name (lowercase).
+# On first request per company, nodes are loaded from
+# vector_store/{company}/bm25_nodes.json (written by build_index.py).
+# A fresh BM25Retriever is built from these cached nodes on every request —
+# BM25Retriever holds a pystemmer Stemmer (PyO3/Rust) that raises
+# "Already borrowed" if the same instance is used by concurrent requests.
+_bm25_nodes_cache: dict = {}
 
 
 def _parse_query(user_query: str) -> dict:
@@ -112,15 +122,31 @@ def _retrieve_context(
     logger.info(f"Retrieval query: {enriched_query}")
 
     # --- 1. Hybrid retrieval: vector + BM25 ---
-    # Cast a wide net (top_k=12) before reranking trims to top 4.
-    vector_retriever = index.as_retriever(similarity_top_k=12)
-    bm25_retriever = BM25Retriever.from_defaults(
-        nodes=list(index.docstore.docs.values()),
-        similarity_top_k=12,
-    )
+    # Cast a wide net (top_k=15) before reranking trims to top 6.
+    vector_retriever = index.as_retriever(similarity_top_k=15)
+
+    # Load nodes once per company into cache; build a fresh BM25Retriever
+    # each request. Reusing one retriever instance across concurrent requests
+    # causes "Already borrowed" from pystemmer's PyO3 Stemmer object.
+    if company not in _bm25_nodes_cache:
+        bm25_nodes_path = f"vector_store/{company}/bm25_nodes.json"
+        if os.path.exists(bm25_nodes_path):
+            with open(bm25_nodes_path, encoding="utf-8") as f:
+                nodes_data = json.load(f)
+            _bm25_nodes_cache[company] = [
+                TextNode(text=n["text"], metadata=n["metadata"], id_=n["id_"])
+                for n in nodes_data
+            ]
+            logger.info(f"BM25 nodes loaded from disk for '{company}' ({len(_bm25_nodes_cache[company])} nodes)")
+        else:
+            # Fallback: load from live index docstore (run build_index.py to persist the corpus)
+            logger.warning(f"bm25_nodes.json not found for '{company}', loading from index docstore")
+            _bm25_nodes_cache[company] = list(index.docstore.docs.values())
+
+    bm25_retriever = BM25Retriever.from_defaults(nodes=_bm25_nodes_cache[company], similarity_top_k=15)
     fusion_retriever = QueryFusionRetriever(
         retrievers=[vector_retriever, bm25_retriever],
-        similarity_top_k=12,
+        similarity_top_k=15,
         # num_queries=1 disables LLM query-generation; use the original query only.
         num_queries=1,
         mode="reciprocal_rerank",
@@ -128,8 +154,9 @@ def _retrieve_context(
     nodes = fusion_retriever.retrieve(enriched_query)
 
     # --- 2. Cross-encoder reranking ---
-    # The reranker scores each (question, node) pair directly and returns top_n=4.
-    nodes = reranker.postprocess_nodes(nodes, query_bundle=QueryBundle(question))
+    # Use enriched_query (includes quarter/FY hints) so the reranker scores nodes
+    # against the same context-rich query used during retrieval.
+    nodes = reranker.postprocess_nodes(nodes, query_bundle=QueryBundle(enriched_query))
 
     # Build context string with source metadata for traceability
     context_parts = []
@@ -145,11 +172,14 @@ def _retrieve_context(
 def _generate_answer(context: str, question: str, max_retries: int = 4) -> str:
     """Generate an answer from Gemini using only the provided context."""
     prompt = (
-        "You are analyzing company documents.\n\n"
+        "You are analyzing company financial documents.\n\n"
         " STRICT INSTRUCTIONS:\n"
         " - Use ONLY the provided context.\n"
         " - Do NOT use outside knowledge.\n"
-        " - Do NOT infer numerical values unless explicitly mentioned.\n"
+        " - Do NOT infer or estimate numerical values not explicitly present in the context.\n"
+        " - Treat equivalent financial terms as the same concept: "
+        "'profit'/'net profit'/'quarterly profit' = PAT (Profit After Tax); "
+        "'operating profit' = EBITDA (for Reliance) or Pre-provision operating profit (for banks).\n"
         " - If the answer is not explicitly stated, respond exactly: \"Not found in documents.\"\n"
         " - If numerical data is required but not found, respond exactly: \"Exact numerical data not found in documents.\"\n\n"
         " CONTEXT\n"
@@ -163,7 +193,11 @@ def _generate_answer(context: str, question: str, max_retries: int = 4) -> str:
 
     for attempt in range(max_retries):
         try:
-            response = client.models.generate_content(model=gemini_model, contents=prompt)
+            response = client.models.generate_content(
+                model=gemini_model,
+                contents=prompt,
+                config=genai_types.GenerateContentConfig(temperature=0.1),
+            )
             return response.text
         except Exception as e:
             is_last = attempt == max_retries - 1
@@ -184,13 +218,12 @@ def _format_chunks(nodes: list) -> str:
     return "\n".join(lines)
 
 
-def rag_tool(user_query: str, eval_mode: bool = False) -> str:
+def rag_tool(user_query: str) -> str:
     """Public RAG tool entrypoint used by the agent/tooling layer.
 
     Parses the structured user query, retrieves relevant context from the
     company's vector store using hybrid search + reranking, asks the Gemini
     model to answer using only that context, and returns the result.
-    When `eval_mode` is True the raw model answer is returned.
     """
     logger.info(f"Using RAG tool for query: {user_query}")
 
@@ -228,15 +261,10 @@ def rag_tool(user_query: str, eval_mode: bool = False) -> str:
             node.metadata.get("file_name", "Unknown") for node in nodes
         ))
         sources_marker = "\n\n[SOURCES_USED: " + "; ".join(unique_sources) + "]"
-        context_marker = "\n\n[RAG_CONTEXT_START]\n" + context + "\n[RAG_CONTEXT_END]"
-        return _format_chunks(nodes) + sources_marker + context_marker
-
-    if eval_mode:
-        return answer
+        return _format_chunks(nodes) + sources_marker
 
     unique_sources = list(dict.fromkeys(
         node.metadata.get("file_name", "Unknown") for node in nodes
     ))
     sources_marker = "\n\n[SOURCES_USED: " + "; ".join(unique_sources) + "]"
-    context_marker = "\n\n[RAG_CONTEXT_START]\n" + context + "\n[RAG_CONTEXT_END]"
-    return answer + sources_marker + context_marker
+    return answer + sources_marker

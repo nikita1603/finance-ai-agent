@@ -10,6 +10,7 @@ import asyncio
 import argparse
 import logging
 import re
+import time
 from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -50,7 +51,7 @@ def load_test_cases(csv_path: str) -> List[Dict]:
     return data.to_dict(orient="records")
 
 
-def compute_result(expected: Dict, tools_called: List[str], response: Optional[str], sources_used: List[str]) -> Dict:
+def compute_result(expected: Dict, tools_called: List[str], response: Optional[str], sources_used: List[str], latency: float = 0.0) -> Dict:
     """Compute per-question evaluation result dict.
 
     Compares expected tools/keywords/sources against the actual tools
@@ -90,6 +91,7 @@ def compute_result(expected: Dict, tools_called: List[str], response: Optional[s
         "sources_used": list(act_src),
         "sources_precision": sources_precision,
         "sources_recall": sources_recall,
+        "latency_s": latency,
     }
 
 
@@ -112,6 +114,9 @@ def compute_metrics(results: List[Dict]) -> Dict:
         "rag_tests": n_rag,
         "sources_avg_precision": sum(r["sources_precision"] for r in rag_results) / n_rag if n_rag else None,
         "sources_avg_recall": sum(r["sources_recall"] for r in rag_results) / n_rag if n_rag else None,
+        "latency_avg_s": sum(r["latency_s"] for r in results) / n,
+        "latency_p95_s": sorted(r["latency_s"] for r in results)[int(0.95 * n)],
+        "latency_max_s": max(r["latency_s"] for r in results),
     }
 
 
@@ -151,8 +156,11 @@ async def main(csv_path: str) -> None:
     for i, expected in enumerate(test_cases, 1):
         logger.info(f"Running test case {i}/{len(test_cases)}: {expected['company']}")
         query = QUERY_TEMPLATE.format(**expected)
+        t0 = time.perf_counter()
         tools_called, response, sources_used = await run_query(query)
-        results.append(compute_result(expected, tools_called, response, sources_used))
+        latency = time.perf_counter() - t0
+        logger.info(f"Latency: {latency:.2f}s")
+        results.append(compute_result(expected, tools_called, response, sources_used, latency))
     print_results(results, compute_metrics(results))
 
 

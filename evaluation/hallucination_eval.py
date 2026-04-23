@@ -11,7 +11,7 @@ import argparse
 import json
 import logging
 import re
-from typing import Dict, List, Optional
+from typing import Dict
 
 from backend.tools.company_financial_statement_tool.rag_model import (
     _parse_query,

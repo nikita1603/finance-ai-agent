@@ -1,19 +1,44 @@
 """Streamlit frontend for the Stocks AI Agent."""
 
 from datetime import date
+import re
 import requests
 import streamlit as st
 
-# ── Page config ──────────────────────────────────────────────────────────────
+# ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Stocks AI Agent",
     page_icon="📈",
     layout="wide",
 )
 
-# ── Session state ─────────────────────────────────────────────────────────────
-if "history" not in st.session_state:
-    st.session_state.history = []  # list of {"role": ..., "content": ...}
+EXAMPLE_QUESTIONS = [
+    "What was the net profit for Q3 FY25-26?",
+    "Summarize recent news.",
+    "What is the current P/E ratio?",
+    "What were the key revenue drivers this quarter?",
+    "What is the stock price on 2026-04-23 and explain the movement?",
+]
+
+TOOL_LABELS = {
+    "rag_tool": "📄 RAG (Documents)",
+    "get_gnews_articles": "📰 News",
+    "historical_price_tool": "📈 Historical Price",
+    "fundamental_tool": "🔢 Fundamentals",
+}
+
+def parse_answer(raw: str) -> tuple[str, list[str]]:
+    """Strip RAG markers from answer and extract source file names."""
+    # Extract sources
+    sources = []
+    match = re.search(r"\[SOURCES_USED:\s*([^\]]+)\]", raw)
+    if match:
+        sources = [s.strip() for s in match.group(1).split(";") if s.strip()]
+
+    # Strip [SOURCES_USED: ...] marker appended by rag_tool
+    clean = re.sub(r"\[SOURCES_USED:[^\]]*\]", "", raw)
+    return clean.strip(), sources
+
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
@@ -23,15 +48,9 @@ with st.sidebar:
 
     selected_date = st.date_input("Date", value=date.today())
 
-    company = st.selectbox(
-        "Company",
-        ["HDFC", "RELIANCE", "TCS", "INFOSYS", "WIPRO"],
-    )
+    company = st.selectbox("Company", ["HDFC", "RELIANCE"])
 
-    financial_year = st.selectbox(
-        "Financial Year",
-        ["2025-2026", "2024-2025", "2023-2024"],
-    )
+    financial_year = st.selectbox("Financial Year", ["2025-26", "2024-25", "2023-24"])
 
     quarter = st.selectbox(
         "Quarter",
@@ -39,39 +58,36 @@ with st.sidebar:
         index=0,
     )
 
-    st.divider()
-    if st.button("🗑️ Clear chat", use_container_width=True):
-        st.session_state.history = []
-        st.rerun()
-
 # ── Main area ─────────────────────────────────────────────────────────────────
 st.header("💬 Ask about your stock")
 
-# Render existing chat history
-for msg in st.session_state.history:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+if "query_text" not in st.session_state:
+    st.session_state.query_text = ""
 
-# Input at the bottom
-query = st.chat_input("Ask a question about the selected stock…")
+# Example question buttons
+st.caption("Try an example:")
+cols = st.columns(len(EXAMPLE_QUESTIONS))
+for col, question in zip(cols, EXAMPLE_QUESTIONS):
+    if col.button(question, use_container_width=True):
+        st.session_state.query_text = question
+        st.rerun()
 
-if query:
-    # Show the user's message immediately
-    st.session_state.history.append({"role": "user", "content": query})
-    with st.chat_message("user"):
-        st.markdown(query)
+query = st.text_area(
+    "Ask a question about the selected stock:",
+    key="query_text",
+    height=100,
+)
 
-    # Build the structured prompt
-    final_query = (
-        f"Date: {selected_date}\n"
-        f"Company: {company}\n"
-        f"Financial Year: {financial_year}\n"
-        f"Quarter: {quarter}\n"
-        f"Question: {query}"
-    )
+if st.button("Ask", type="primary"):
+    if query:
+        final_query = (
+            f"Date: {selected_date}\n"
+            f"Company: {company}\n"
+            f"Financial Year: {financial_year}\n"
+            f"Quarter: {quarter}\n"
+            f"Question: {query}"
+        )
 
-    # Call the backend
-    with st.chat_message("assistant"):
         with st.spinner("Thinking…"):
             try:
                 resp = requests.post(
@@ -80,14 +96,36 @@ if query:
                     timeout=120,
                 )
                 resp.raise_for_status()
-                answer = resp.json().get("answer", "No answer returned.")
+                data = resp.json()
+                raw_answer = data.get("answer", "No answer returned.")
+                tools_used = data.get("tools_used", [])
             except requests.exceptions.ConnectionError:
-                answer = "⚠️ Could not reach the backend. Make sure the server is running on port 8000."
+                raw_answer = "⚠️ Could not reach the backend. Make sure the server is running on port 8000."
+                tools_used = []
             except requests.exceptions.Timeout:
-                answer = "⚠️ The request timed out. The agent may be overloaded — please try again."
+                raw_answer = "⚠️ The request timed out. The agent may be overloaded — please try again."
+                tools_used = []
             except Exception as exc:
-                answer = f"⚠️ Unexpected error: {exc}"
+                raw_answer = f"⚠️ Unexpected error: {exc}"
+                tools_used = []
 
+        answer, sources = parse_answer(raw_answer)
+
+        # Tools used badges
+        if tools_used:
+            badge_str = " &nbsp; ".join(
+                f"`{TOOL_LABELS.get(t, t)}`" for t in tools_used
+            )
+            st.markdown(f"**Tools used:** {badge_str}")
+
+        # Answer
+        st.markdown("---")
         st.markdown(answer)
 
-    st.session_state.history.append({"role": "assistant", "content": answer})
+        # Source citations
+        if sources:
+            with st.expander("📎 Sources"):
+                for src in sources:
+                    st.markdown(f"- {src}")
+    else:
+        st.warning("Please enter a question.")

@@ -1,16 +1,15 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
-from backend.agent_system import agent
-from fastapi.responses import JSONResponse
-from fastapi import FastAPI
-from llama_index.core.agent.workflow import (
-    ToolCallResult,
-    AgentStream,
-)
-
 import asyncio
 import logging
+import re
+
+from fastapi import FastAPI
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from llama_index.core.agent.workflow import ToolCallResult, AgentStream
+
+from backend.agent_system import agent
 from backend.logger_config import setup_logger
+
 setup_logger()
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ async def ask(request: QueryRequest):
     """
     global query_counter
     # Log the received query (keeps original log message format)
-    logger.info(f"Received query : {request.query}") 
+    logger.info(f"Received query : {request.query}")
     query_counter += 1
 
     max_retries = 4
@@ -64,9 +63,9 @@ async def ask(request: QueryRequest):
                     tool_outputs[event.tool_name] = str(event.tool_output)
 
             response = await handler
-            logger.info(f"Agent responded successfully")
+            logger.info("Agent responded successfully")
             logger.info(f"EVALUATION_LOGS | QUERY_RESPONSE | QUERY_NUM: {query_counter} | RESPONSE: {str(response).replace('\n', ' ')}")
-            return {"answer": str(response)}
+            return {"answer": str(response), "tools_used": list(tool_outputs.keys())}
 
         except Exception as e:
             err_str = str(e)
@@ -84,7 +83,6 @@ async def ask(request: QueryRequest):
             # For 429, parse the suggested retry delay from the error message; fall back to exponential backoff
             delay = 2 ** attempt
             if "429" in err_str:
-                import re
                 match = re.search(r"retry.*?(\d+(?:\.\d+)?)s", err_str, re.IGNORECASE)
                 if match:
                     delay = float(match.group(1)) + 2  # small buffer
