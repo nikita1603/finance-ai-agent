@@ -183,7 +183,7 @@ All 16 RAG answers were fully grounded in the retrieved context — no unsupport
 Key observations:
 - Tool routing is highly reliable (97% precision); all 30 queries returned an answer
 - Zero hallucinations across all RAG answers — the strict context-only prompt is effective
-- Context precision (39%) is the main area for improvement; the reranker reduces but does not eliminate cross-quarter chunk bleed
+  
 
 ### Test Case CSV Format
 
