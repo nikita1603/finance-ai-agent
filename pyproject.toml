@@ -26,7 +26,9 @@ dependencies = [
     "llama-index-postprocessor-flag-embedding-reranker",
     "FlagEmbedding",
     "transformers<5",
-    "python-dotenv"
+    "python-dotenv",
+    "plotly",
+    "numpy"
 ]
 
 [tool.setuptools]

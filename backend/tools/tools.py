@@ -1,8 +1,8 @@
 """Tool registry for the agent.
 
-This module defines `TOOLS`, a list of `FunctionTool` wrappers that expose
-project-specific helper functions (RAG search, news, historical prices,
-and fundamentals) to the `FunctionAgent`.
+Defines `TOOLS`, the list of `FunctionTool` wrappers that expose project-specific
+helper functions to the `FunctionAgent`. Each tool is purpose-scoped to minimise
+hallucination and unnecessary LLM calls.
 """
 
 from llama_index.core.tools import FunctionTool
@@ -10,10 +10,8 @@ from backend.tools.company_financial_statement_tool.rag_model import rag_tool
 from backend.tools.historical_price_tool.yfinance_tool import historical_price_tool
 from backend.tools.company_fundamental_tool.yfinance_tools import fundamental_tool
 from backend.tools.news_tool.gnews_tool import get_gnews_articles
+from backend.tools.quant_analytics_tool.quant_tool import quant_analytics_tool
 
-# List of tools exposed to the agent. Each entry is a FunctionTool that
-# provides a name, a callable, and a description used by the agent's
-# tool-selection logic.
 TOOLS = [
 
     # RAG tool: document-grounded financial numbers + qualitative analysis
@@ -49,6 +47,7 @@ TOOLS = [
             "- Current/live stock price or intraday price data\n"
             "- Live valuation ratios (P/E, P/B — use fundamental_tool)\n"
             "- Recent market news or stock movement catalysts (use get_gnews_articles)\n"
+            "- Risk/return analytics or volatility metrics (use quant_analytics_tool)\n"
         )
     ),
 
@@ -81,6 +80,7 @@ TOOLS = [
             "- Financial statement numbers\n"
             "- Valuation ratios\n"
             "- Historical stock prices\n"
+            "- Risk/return analytics (use quant_analytics_tool)\n"
         )
     ),
 
@@ -111,10 +111,11 @@ TOOLS = [
             "- Valuation ratios\n"
             "- Company performance commentary\n"
             "- News or event analysis\n"
+            "- Risk/return analytics over a period (use quant_analytics_tool)\n"
         )
     ),
 
-    # Fundamental tool: current valuation ratios and company profile
+    # Fundamental tool: current valuation ratios, company profile, and dual beta
     FunctionTool.from_defaults(
         fn=fundamental_tool,
         name="fundamental_tool",
@@ -125,7 +126,7 @@ TOOLS = [
             "- Valuation: Market Cap, P/E (Trailing and Forward), Price-to-Book\n"
             "- Returns: ROE, ROA, Profit Margins\n"
             "- Income: Dividend Yield\n"
-            "- Risk: Beta\n"
+            "- Risk: Beta (both published 5Y monthly and computed 1Y daily OLS vs NIFTY 50)\n"
             "- Profile: Sector, Industry\n\n"
 
             "INPUT FORMAT (pass the full structured block exactly as received):\n"
@@ -142,6 +143,44 @@ TOOLS = [
             "- Period-specific financial results (use rag_tool)\n"
             "- Historical stock prices (use historical_price_tool)\n"
             "- News or market catalysts (use get_gnews_articles)\n"
+            "- Extended risk/return analytics (Sharpe, Sortino, drawdown — use quant_analytics_tool)\n"
+        )
+    ),
+
+    # Quant analytics tool: risk/return metrics over a period
+    FunctionTool.from_defaults(
+        fn=quant_analytics_tool,
+        name="quant_analytics_tool",
+        description=(
+            "Computes quantitative risk and return metrics from historical daily price data "
+            "for a company over a specified period.\n\n"
+
+            "USE THIS TOOL FOR:\n"
+            "- Annualized return (CAGR) and total return over a period\n"
+            "- Volatility: annualized and rolling 30-day\n"
+            "- Risk-adjusted returns: Sharpe ratio and Sortino ratio\n"
+            "- Downside risk: maximum drawdown\n"
+            "- Market-model statistics vs NIFTY 50: beta, alpha, R-squared, beta standard error\n"
+            "- Any question asking about 'performance', 'risk', 'volatility', or 'drawdown' over a period\n\n"
+
+            "INPUT FORMAT (pass the full structured block exactly as received):\n"
+            "Date: YYYY-MM-DD\n"
+            "Company: Company Name\n"
+            "Financial Year: YYYY-YY\n"
+            "Quarter: Q1/Q2/Q3/Q4/None\n"
+            "Question: User Question\n\n"
+
+            "Date window resolution (in priority order):\n"
+            "  1. Explicit years in the question ('in 2025', '2025 and 2026') override everything.\n"
+            "  2. Relative phrases ('last 6 months', '2 years') are applied relative to the end\n"
+            "     of the selected Financial Year (March 31 of the FY end year).\n"
+            "  3. No period → defaults to the full Financial Year window (1 year ending March 31).\n\n"
+
+            "DO NOT use this tool for:\n"
+            "- Financial statement figures (use rag_tool)\n"
+            "- Current valuation ratios (use fundamental_tool)\n"
+            "- Price on a specific date (use historical_price_tool)\n"
+            "- News or event analysis (use get_gnews_articles)\n"
         )
     ),
 ]

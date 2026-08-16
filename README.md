@@ -4,14 +4,15 @@ An AI-powered agent for financial analysis and insights using Retrieval-Augmente
 
 ## Features
 
-- **RAG-based Financial Analysis**: Uses LlamaIndex with Google Gemini (`gemini-2.5-flash`) for document retrieval and qualitative analysis from earnings calls, annual reports, and quarterly results
+- **RAG-based Financial Analysis**: LlamaIndex with Google Gemini (`gemini-2.5-flash`) for document retrieval and qualitative analysis from earnings calls, annual reports, and quarterly results
+- **Quantitative Risk Analytics**: Sharpe ratio, Sortino ratio, CAGR, max drawdown, rolling volatility, and OLS beta vs NIFTY 50
 - **Multi-company Support**: HDFC Bank and Reliance Industries, with pre-built vector stores per company
-- **Four Specialized Tools**: Each tool is purpose-scoped to minimize hallucination and unnecessary LLM calls
+- **Five Specialized Tools**: Each tool is purpose-scoped to minimise hallucination and unnecessary LLM calls
 - **REST API Backend**: FastAPI backend with auto-generated docs
-- **Interactive Web UI**: Streamlit-based chat interface
-- **Real-time Market Data**: yfinance integration for stock prices and fundamentals
+- **Interactive Web UI**: Two-tab Streamlit interface — Chat with conversation history, and Visualize with interactive Plotly charts
+- **Real-time Market Data**: yfinance integration for stock prices, fundamentals, and quantitative analytics
 - **News Integration**: GNews API for event-driven and sentiment analysis
-- **Evaluation Suite**: End-to-end agent evaluation and RAG hallucination detection
+- **Evaluation Suite**: End-to-end agent evaluation with 95% confidence intervals and RAG hallucination detection
 
 ## Project Structure
 
@@ -23,17 +24,18 @@ An AI-powered agent for financial analysis and insights using Retrieval-Augmente
 │   ├── main.py               # FastAPI app
 │   ├── logger_config.py
 │   └── tools/
-│       ├── tools.py                          # Tool registry (TOOLS list)
+│       ├── tools.py                          # Tool registry (TOOLS list — 5 tools)
 │       ├── company_financial_statement_tool/ # RAG tool (hybrid retrieval + reranking)
-│       ├── company_fundamental_tool/         # Valuation ratios via yfinance
+│       ├── company_fundamental_tool/         # Valuation ratios + dual beta via yfinance
 │       ├── historical_price_tool/            # OHLCV data via yfinance
-│       └── news_tool/                        # News via GNews API
+│       ├── news_tool/                        # News via GNews API
+│       └── quant_analytics_tool/             # Risk/return analytics via yfinance + OLS
 ├── frontend/
-│   └── app.py                # Streamlit UI
+│   └── app.py                # Streamlit UI (Chat + Visualize tabs)
 ├── evaluation/
-│   ├── evaluate.py           # End-to-end agent evaluation (tool accuracy, keywords, latency)
+│   ├── evaluate.py           # End-to-end agent evaluation (tool accuracy, CIs, latency)
 │   ├── hallucination_eval.py # RAG hallucination detection using Gemini as judge
-│   ├── eval_utils.py         # Result printing utilities
+│   ├── eval_utils.py         # Result printing with 95% confidence intervals
 │   ├── evaluation_sample.csv # Test cases for full agent evaluation
 │   ├── rag_evaluation_sample.csv # Test cases for RAG-specific evaluations
 │   └── makefile              # Evaluation commands
@@ -50,7 +52,7 @@ An AI-powered agent for financial analysis and insights using Retrieval-Augmente
 
 ## Agent Tools
 
-The agent selects tools based on query intent. Each tool expects a structured input:
+The agent selects tools based on query intent. All tools share the same structured input format:
 
 ```
 Date: YYYY-MM-DD
@@ -63,9 +65,10 @@ Question: User Question
 | Tool | Purpose |
 |---|---|
 | `rag_tool` | Financial figures and qualitative analysis from indexed earnings PDFs (revenue, PAT, NIM, GNPA, management commentary, guidance) |
-| `fundamental_tool` | Current valuation ratios: P/E, P/B, ROE, market cap, dividend yield, beta |
+| `fundamental_tool` | Current valuation ratios: P/E, P/B, ROE, market cap, dividend yield; published 5Y monthly beta and computed 1Y daily OLS beta vs NIFTY 50 |
 | `historical_price_tool` | OHLCV stock price data for a specific date |
 | `get_gnews_articles` | Recent news, stock movement reasons, event-driven analysis |
+| `quant_analytics_tool` | Risk/return analytics over a period: CAGR, annualized volatility, Sharpe ratio, Sortino ratio, max drawdown, rolling 30d volatility, OLS beta/alpha vs NIFTY 50 |
 
 The agent is capped at 10 tool calls per query to prevent runaway chains.
 
@@ -120,7 +123,7 @@ Starts the FastAPI server at `http://localhost:8000`. API docs at `http://localh
 ```bash
 make run_ui
 ```
-Starts the Streamlit web interface.
+Starts the Streamlit web interface with Chat and Visualize tabs.
 
 ## Evaluation
 
@@ -130,13 +133,15 @@ The `evaluation/` module provides two complementary evaluation modes.
 
 Runs the agent against a CSV of test cases and measures:
 
-- **Tool accuracy** — whether the agent called the expected tools
+- **Tool accuracy** — whether the agent called exactly the expected tools
 - **Tool precision / recall** — partial credit for correct tool selection
 - **Keyword recall** — whether the response contains expected terms
 - **Multi-hop accuracy** — whether the agent correctly chains multiple tools
 - **Source precision / recall** — for RAG queries, whether the right documents were retrieved
 - **Response rate** — fraction of queries that returned a non-empty answer
-- **Latency** — avg, p95, and max query time in seconds
+- **Latency** — avg, p95 (with bootstrap CI), and max query time in seconds
+
+All aggregate metrics are reported with **95% confidence intervals** (Wilson score for binary metrics, percentile bootstrap for ratio averages and latency p95). A per-query timeout of 300 seconds prevents upstream API hangs from blocking the evaluation run.
 
 ```bash
 make evaluate
@@ -144,7 +149,7 @@ make evaluate
 
 ### 2. RAG Hallucination Evaluation
 
-Bypasses the agent and directly evaluates the RAG pipeline (`_retrieve_context` → `_generate_answer`). Uses Gemini to detect claims in the generated answer that are not supported by the retrieved context.
+Bypasses the agent and directly evaluates the RAG pipeline. Uses Gemini to detect claims in the generated answer that are not supported by the retrieved context.
 
 ```bash
 make hallucination
@@ -154,36 +159,34 @@ Output includes a per-query hallucination flag, the specific hallucinated claims
 
 ### Latest Results
 
-**1. End-to-end Agent Evaluation** (30 test cases, evaluated 2026-04-23)
+**1. End-to-end Agent Evaluation** (35 test cases, evaluated 2026-08-09)
 
-| Metric | Score |
-|---|---|
-| Tool accuracy | 87% |
-| Tool precision | 97% |
-| Tool recall | 93% |
-| Keyword recall | 86% |
-| Multi-hop accuracy | 93% |
-| Response rate | 100% |
-| RAG source precision | 42% |
-| RAG source recall | 74% |
-| Latency avg | 36.5s |
-| Latency p95 | 84.7s |
-| Latency max | 93.2s |
+| Metric | Score | 95% CI |
+|---|---|---|
+| Tool accuracy | 80% | [64%, 90%] |
+| Tool precision | 91% | [85%, 97%] |
+| Tool recall | 100% | [100%, 100%] |
+| Keyword recall | 94% | [90%, 97%] |
+| Multi-hop accuracy | 91% | [77%, 97%] |
+| Response rate | 100% | [100%, 100%] |
+| Latency avg | — | — |
+| Latency p95 | 114.1s | — |
 
-**2. RAG Hallucination Evaluation** (16 RAG test cases, evaluated 2026-04-23)
+**2. RAG Hallucination Evaluation** (16 RAG test cases, evaluated 2026-08-09)
 
 | Metric | Score |
 |---|---|
 | Cases evaluated | 16 |
-| Hallucinations detected | 0 |
-| Hallucination rate | 0.0% |
+| Hallucinations detected | 2 |
+| Hallucination rate | 12.5% |
 
-All 16 RAG answers were fully grounded in the retrieved context — no unsupported claims detected by the LLM judge.
+Two hallucinations were detected: one period-attribution error (figures cited for the wrong quarter) and one formatting defect where a number was presented without its correct unit. Neither involved fabricated data — both arose from context bleed in retrieval. The strict context-only prompt remains effective for fabrication prevention; retrieval precision is the active area for improvement.
 
 Key observations:
-- Tool routing is highly reliable (97% precision); all 30 queries returned an answer
-- Zero hallucinations across all RAG answers — the strict context-only prompt is effective
-  
+- Tool recall improved to 100% — the agent never fails to call a required tool
+- Tool precision at 91% reflects some over-calling on open-ended queries
+- Keyword recall improved from 86% to 94% after adding explicit unit-preservation rules to the system prompt
+- Latency p95 increased from 84.7s to 114.1s due to OLS regression computations in `quant_analytics_tool`
 
 ### Test Case CSV Format
 
@@ -206,3 +209,9 @@ Both `evaluation_sample.csv` and `rag_evaluation_sample.csv` share the same sche
 - The vector stores are pre-built; run `make build_index` only when adding new documents
 - Never commit `.env` to version control
 - To add a new company, add its PDFs under `data/<company>/`, add its ticker to `backend/tools/utils.py`, and re-run `make build_index`
+- `quant_analytics_tool` resolves the date window in this order:
+  1. **Explicit years** in the question ("in 2025", "2025 and 2026") — overrides everything
+  2. **Relative phrases** ("last 6 months", "2 years") — applied relative to the end of the selected Financial Year (March 31), not today
+  3. **No period specified** — defaults to the full Financial Year window (1 year ending March 31 of the selected FY)
+
+  Example: selecting FY 2023-24 and asking "Sharpe ratio over the last year" fetches April 2023 – March 2024, not the most recent 12 months
